@@ -32,7 +32,8 @@ function love.load()
     cloud.animations = {}
     cloud.animations.weak = anim8.newAnimation(cloud.grid('3-2',3, '3-2',2 , 1,'3-2', '3-1', 1), 0.18)
 
-    HEIGHT, WIDTH = 500, 500
+    HEIGHT = love.graphics.getHeight()
+    WIDTH = love.graphics.getWidth()
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
@@ -65,36 +66,75 @@ function love.update(dt)
         y_key_pressed = true
     end
     if not x_key_pressed then
-        cloud.dx = 0
+        reduce_x_speed(cloud)
     end
     if not y_key_pressed then
-        cloud.dy = 0
+        reduce_y_speed(cloud)
     end
-    
 
-    move_a_thing(cloud)
+    move_a_thing_warp(cloud)
     cloud.animations.weak:update(dt)
-    bounce_a_thing(cloud)
 
-    move_a_thing(obstacle_L_1)
+    move_a_thing_bounded(obstacle_L_1)
     bounce_a_thing(obstacle_L_1)
 
 end
 
-function move_a_thing(thing)
+function reduce_x_speed(thing)
+    if(thing.dx == 0) then
+        return
+    end
+    if(thing.dx < 0) then
+        thing.dx = thing.dx + 1
+    elseif(thing.dx > 0) then
+        thing.dx = thing.dx - 1
+    end
+end
+
+function reduce_y_speed(thing)
+    if(thing.dy == 0) then
+        return
+    end
+    if(thing.dy < 0) then
+        thing.dy = thing.dy + 1
+    elseif(thing.dy > 0) then
+        thing.dy = thing.dy - 1
+    end
+end
+
+function move_a_thing_bounded(thing)
     -- x
-    if (thing.x + thing.dx) > WIDTH then
+    if (thing.x + thing.dx) > (WIDTH+thing.dx) then
         thing.x = WIDTH
-    elseif(thing.x + thing.dx) < 0 then
+    elseif(thing.x + thing.dx) < (0-thing.dx) then
         thing.x = 0
     else
         thing.x = thing.x + thing.dx
     end
     -- y
-    if (thing.y + thing.dy) > HEIGHT then
+    if (thing.y + thing.dy) > (HEIGHT+thing.dy) then
         thing.y = HEIGHT
-    elseif(thing.y + thing.dy) < 0 then
+    elseif(thing.y + thing.dy) < (0-thing.dy) then
         thing.y = 0
+    else
+        thing.y = thing.y + thing.dy
+    end
+end
+
+function move_a_thing_warp(thing)
+    -- x
+    if (thing.x + thing.dx) > (WIDTH+thing.dx) then
+        thing.x = 0
+    elseif(thing.x + thing.dx) < (0-thing.dx) then
+        thing.x = WIDTH
+    else
+        thing.x = thing.x + thing.dx
+    end
+    -- y
+    if (thing.y + thing.dy) > (HEIGHT+thing.dy) then
+        thing.y = 0
+    elseif(thing.y + thing.dy) < (0-thing.dy) then
+        thing.y = HEIGHT
     else
         thing.y = thing.y + thing.dy
     end
