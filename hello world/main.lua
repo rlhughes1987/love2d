@@ -15,6 +15,14 @@ function love.load()
         dx = 1,
         dy = 1
     }
+
+    obstacle_I_1 = {
+        frame = obstacle_factory.constructI(),
+        x = 200,
+        y = 200,
+        dx = -1,
+        dy = 1
+    }
     --local obstacle_I_1 = obstacle_factory.constructI()
 
     
@@ -77,6 +85,8 @@ function love.update(dt)
 
     move_a_thing_bounded(obstacle_L_1)
     bounce_a_thing(obstacle_L_1)
+
+    move_a_thing_warp(obstacle_I_1)
 
 end
 
@@ -146,6 +156,7 @@ function love.draw()
     --love.graphics.rectangle("fill", 50, rectangle_y, 50, 50)
     cloud.animations.weak:draw(cloud.spriteSheet, cloud.x, cloud.y, 0.1, 1)
     drawobstacle(obstacle_L_1.frame, obstacle_L_1.x, obstacle_L_1.y)
+    drawobstacle(obstacle_I_1.frame, obstacle_I_1.x, obstacle_I_1.y)
 
     --love.graphics.rectangle("fill", )
 
@@ -183,3 +194,10 @@ function bounce_a_thing(thing)
     thing.dy = new_dy
 end
 
+
+
+function check_blocked_x(thing1, thing2)
+
+
+
+end
