@@ -3,10 +3,10 @@
 -- bring data as game starts
 function love.load()
     MAX_SPEED = 6
-
+    debug_message = ""
     --imports
     anim8 = require 'libraries/anim8'
-    anim8_2 = require 'libraries/anim8'
+    bump = require 'libraries/bump'
     obstacle_factory = require './obstacle_factory'
     animated_object_factory = require './animated_object_factory'
     camera = require 'libraries/camera'
@@ -24,17 +24,23 @@ function love.load()
     obstacle_U_1 = obstacle_factory.constructU(150,150)
     
     
-    cloud = animated_object_factory.constructCloud(10,10)
-    pipe_cloud = animated_object_factory.constructCloud(768,224)
-    hammer_1 = animated_object_factory.constructHammer(384,512)
+    cloud = animated_object_factory.constructCloud("player_cloud",10,10)
+    pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",768,224)
+    hammer_1 = animated_object_factory.constructHammer("hammer1",384,512)
     hammer_1.animations.turned_on:gotoFrame(2)
-    hammer_2 = animated_object_factory.constructHammer(416,512)
+    hammer_2 = animated_object_factory.constructHammer("hammer2",416,512)
     hammer_2.animations.turned_on:gotoFrame(3)
-    hammer_3 = animated_object_factory.constructHammer(448,512)
+    hammer_3 = animated_object_factory.constructHammer("hammer3",448,512)
     hammer_3.animations.turned_on:gotoFrame(4)
-    hammer_4 = animated_object_factory.constructHammer(480,512)
+    hammer_4 = animated_object_factory.constructHammer("hammer4",480,512)
     hammer_4.animations.turned_on:gotoFrame(5)
-    hammer_5 = animated_object_factory.constructHammer(512,512)
+    hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
+
+    --collision stuff
+    world = bump.newWorld(32)
+
+    world:add(cloud, 0, cloud.x, cloud.y, 32, 32)
+    world:add(pipe_cloud,0,pipe_cloud.x,pipe_cloud.y, 32, 32)
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
@@ -117,7 +123,9 @@ function love.update(dt)
         cam.y = (mapH - h/2)
     end
 
-    
+    -- collision world
+    world:update(cloud, cloud.x, cloud.y, 32, 32)
+    world:update(pipe_cloud, pipe_cloud.x, pipe_cloud.y, 32, 32)
 
 end
 
@@ -168,13 +176,24 @@ function move_a_thing_bounded(thing)
 end
 
 function move_a_thing_bounded_reset(thing)
+    --world:add(thing,0,thing.x,thing.y, 32, 32)
+    if not world:hasItem(thing) then
+        world:add(thing,0,thing.x,thing.y, 32, 32)
+    end
     -- x
     if (thing.x + thing.dx) > (WIDTH + 64) then --make sure object goes off screen first
         thing.x = thing.init_x
     elseif(thing.x + thing.dx) < -64 then --make sure object goes off screen first
         thing.x = thing.init_x
     else
-        thing.x = thing.x + thing.dx
+        --thing.x = thing.x + thing.dx
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.dx),thing.y)
+        if len > 0 then
+            debug_message = "Collision"
+        else
+            debug_message = "Freedom"
+            thing.x = thing.x + thing.dx
+        end
     end
     -- y
     if (thing.y + thing.dy) > (HEIGHT + 64) then
@@ -182,7 +201,14 @@ function move_a_thing_bounded_reset(thing)
     elseif(thing.y + thing.dy) < -64 then
         thing.y = thing.init_y
     else
-        thing.y = thing.y + thing.dy
+        --thing.y = thing.y + thing.dy
+        local actualX, actualY, cols, len = world:move(thing, thing.x,(thing.y+thing.dy))
+        if len > 0 then
+            debug_message = "Collision"
+        else
+            debug_message = "Freedom"
+            thing.y = thing.y + thing.dy
+        end
     end
 end
 
@@ -225,6 +251,7 @@ function love.draw()
         gameMap:drawLayer(gameMap.layers["Front"])
     cam:detach()
     love.graphics.print("HP: ", 10, 10)
+    love.graphics.print("Debug: " .. debug_message, 10, 30)
     
     --drawobstacle(obstacle_L_1)
     --drawobstacle(obstacle_I_1)
