@@ -4,52 +4,37 @@
 function love.load()
     MAX_SPEED = 6
 
+    --imports
     anim8 = require 'libraries/anim8'
+    anim8_2 = require 'libraries/anim8'
     obstacle_factory = require './obstacle_factory'
+    animated_object_factory = require './animated_object_factory'
+    camera = require 'libraries/camera'
+    cam = camera()
+
+    sti = require 'libraries/sti'
+    gameMap = sti('maps/industrial_area.lua')
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
+
+    WIDTH = gameMap.width * gameMap.tilewidth
+    HEIGHT = gameMap.height * gameMap.tileheight
+
+    obstacle_L_1 = obstacle_factory.constructL(150,50)
+    obstacle_I_1 = obstacle_factory.constructI(250,100)
+    obstacle_U_1 = obstacle_factory.constructU(150,150)
     
-    obstacle_L_1 = {
-        frame = obstacle_factory.constructL(),
-        x = 100,
-        y = 100,
-        dx = 1,
-        dy = 1
-    }
-
-    obstacle_I_1 = {
-        frame = obstacle_factory.constructI(),
-        x = 200,
-        y = 200,
-        dx = -1,
-        dy = 1
-    }
-
-    obstacle_U_1 = {
-        frame = obstacle_factory.constructU(),
-        x = 150,
-        y = 150,
-        dx = -1,
-        dy = 1
-    }
-    --local obstacle_I_1 = obstacle_factory.constructI()
-
     
-    going_down = true
-
-    
-    cloud = {}
-    cloud.x = 300
-    cloud.y = 10
-    cloud.dx = 1
-    cloud.dy = 1
-    cloud.spriteSheet = love.graphics.newImage('sprites/vapor_cloud.png')
-    cloud.grid = anim8.newGrid(64,64, cloud.spriteSheet:getWidth(), cloud.spriteSheet:getHeight())
-
-    cloud.animations = {}
-    cloud.animations.weak = anim8.newAnimation(cloud.grid('3-2',3, '3-2',2 , 1,'3-2', '3-1', 1), 0.18)
-
-    HEIGHT = love.graphics.getHeight()
-    WIDTH = love.graphics.getWidth()
+    cloud = animated_object_factory.constructCloud(10,10)
+    pipe_cloud = animated_object_factory.constructCloud(768,224)
+    hammer_1 = animated_object_factory.constructHammer(384,512)
+    hammer_1.animations.turned_on:gotoFrame(2)
+    hammer_2 = animated_object_factory.constructHammer(416,512)
+    hammer_2.animations.turned_on:gotoFrame(3)
+    hammer_3 = animated_object_factory.constructHammer(448,512)
+    hammer_3.animations.turned_on:gotoFrame(4)
+    hammer_4 = animated_object_factory.constructHammer(480,512)
+    hammer_4.animations.turned_on:gotoFrame(5)
+    hammer_5 = animated_object_factory.constructHammer(512,512)
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
@@ -88,8 +73,19 @@ function love.update(dt)
         reduce_y_speed(cloud)
     end
 
-    move_a_thing_warp(cloud)
+    move_a_thing_bounded(cloud)
     cloud.animations.weak:update(dt)
+
+
+    direct_a_thing_up(pipe_cloud)
+    move_a_thing_bounded_reset(pipe_cloud)
+    pipe_cloud.animations.weak:update(dt)
+
+    hammer_1.animations.turned_on:update(dt)
+    hammer_2.animations.turned_on:update(dt)
+    hammer_3.animations.turned_on:update(dt)
+    hammer_4.animations.turned_on:update(dt)
+    hammer_5.animations.turned_on:update(dt)
 
     move_a_thing_bounded(obstacle_L_1)
     bounce_a_thing(obstacle_L_1)
@@ -98,6 +94,30 @@ function love.update(dt)
 
     move_a_thing_bounded(obstacle_U_1)
     bounce_a_thing(obstacle_U_1)
+
+    cam:lookAt(cloud.x, cloud.y)
+    local w = love.graphics.getWidth()
+    local h = love.graphics.getHeight()
+    --bound camera to left scene edge
+    if cam.x < w/2 then
+        cam.x = w/2
+    end
+    --top edge
+    if cam.y < h/2 then
+        cam.y = h/2
+    end
+    local mapW = gameMap.width * gameMap.tilewidth
+    local mapH = gameMap.height * gameMap.tileheight
+    --right edge
+    if cam.x > (mapW - w/2) then
+        cam.x = (mapW - w/2)
+    end
+    -- bottom edge
+    if cam.y > (mapH - h/2) then
+        cam.y = (mapH - h/2)
+    end
+
+    
 
 end
 
@@ -123,20 +143,44 @@ function reduce_y_speed(thing)
     end
 end
 
+function direct_a_thing_up(thing)
+    thing.dx = 0
+    thing.dy = -1
+end
+
 function move_a_thing_bounded(thing)
     -- x
-    if (thing.x + thing.dx) > (WIDTH+thing.dx) then
+    if (thing.x + thing.dx) > WIDTH then
         thing.x = WIDTH
-    elseif(thing.x + thing.dx) < (0-thing.dx) then
+    elseif(thing.x + thing.dx) < 0 then
         thing.x = 0
     else
         thing.x = thing.x + thing.dx
     end
     -- y
-    if (thing.y + thing.dy) > (HEIGHT+thing.dy) then
+    if (thing.y + thing.dy) > HEIGHT then
         thing.y = HEIGHT
-    elseif(thing.y + thing.dy) < (0-thing.dy) then
+    elseif(thing.y + thing.dy) < 0 then
         thing.y = 0
+    else
+        thing.y = thing.y + thing.dy
+    end
+end
+
+function move_a_thing_bounded_reset(thing)
+    -- x
+    if (thing.x + thing.dx) > (WIDTH + 64) then --make sure object goes off screen first
+        thing.x = thing.init_x
+    elseif(thing.x + thing.dx) < -64 then --make sure object goes off screen first
+        thing.x = thing.init_x
+    else
+        thing.x = thing.x + thing.dx
+    end
+    -- y
+    if (thing.y + thing.dy) > (HEIGHT + 64) then
+        thing.y = thing.init_y
+    elseif(thing.y + thing.dy) < -64 then
+        thing.y = thing.init_y
     else
         thing.y = thing.y + thing.dy
     end
@@ -163,13 +207,28 @@ end
 
 --
 function love.draw()
+    cam:attach()
     --love.graphics.print(number, 400, 300)
     --love.graphics.rectangle("fill", 50, rectangle_y, 50, 50)
-    cloud.animations.weak:draw(cloud.spriteSheet, cloud.x, cloud.y, 0.1, 1)
-    drawobstacle(obstacle_L_1)
-    drawobstacle(obstacle_I_1)
-    drawobstacle(obstacle_U_1)
-
+        gameMap:drawLayer(gameMap.layers["Background"])
+        gameMap:drawLayer(gameMap.layers["Underground darkness"])
+        gameMap:drawLayer(gameMap.layers["Inner 1"])
+        gameMap:drawLayer(gameMap.layers["Middle"])
+        gameMap:drawLayer(gameMap.layers["Inner 2"])
+        hammer_1.animations.turned_on:draw(hammer_1.spriteSheet, hammer_1.x, hammer_1.y, 0)
+        hammer_2.animations.turned_on:draw(hammer_2.spriteSheet, hammer_2.x, hammer_2.y, 0)
+        hammer_3.animations.turned_on:draw(hammer_3.spriteSheet, hammer_3.x, hammer_3.y, 0)
+        hammer_4.animations.turned_on:draw(hammer_4.spriteSheet, hammer_4.x, hammer_4.y, 0)
+        hammer_5.animations.turned_on:draw(hammer_5.spriteSheet, hammer_5.x, hammer_5.y, 0)
+        cloud.animations.weak:draw(cloud.spriteSheet, cloud.x, cloud.y, 0.1, 1, 1, 32, 32)
+        pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 32, 32)
+        gameMap:drawLayer(gameMap.layers["Front"])
+    cam:detach()
+    love.graphics.print("HP: ", 10, 10)
+    
+    --drawobstacle(obstacle_L_1)
+    --drawobstacle(obstacle_I_1)
+    --drawobstacle(obstacle_U_1)
     --love.graphics.rectangle("fill", )
 
 end
@@ -205,12 +264,4 @@ function bounce_a_thing(thing)
     end
     thing.dx = new_dx
     thing.dy = new_dy
-end
-
-
-
-function check_blocked_x(thing1, thing2)
-
-
-
 end

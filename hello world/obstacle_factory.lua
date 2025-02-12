@@ -1,20 +1,19 @@
 local obstacle_factory = {
-    x = 50,
-    y = 50
+
 }
 
 -- L shape
-function obstacle_factory.constructL()
-    local L = {}
+function obstacle_factory.constructL(x,y)
+    local L = { frame = {}, x = x, y = y, dx = 1, dy = 1 }
     local N, M = 4, 4
     for i=1, N do
         for j=1, M do
             if (i == 1) then
-                L[i*M + j] = 1
+                L.frame[i*M + j] = 1
             elseif ((i == 2) and (j == 4)) then
-                L[i*M + j] = 1
+                L.frame[i*M + j] = 1
             else
-                L[i*M + j] = 0
+                L.frame[i*M + j] = 0
             end
         end
     end
@@ -22,49 +21,31 @@ function obstacle_factory.constructL()
 end
 
 ---- U shape
-function obstacle_factory.constructL()
-    local L = {}
-    local N, M = 4, 4
-    for i=1, N do
-        for j=1, M do
-            if (i == 1) then
-                L[i*M + j] = 1
-            elseif ((i == 2) and (j == 4)) then
-                L[i*M + j] = 1
-            else
-                L[i*M + j] = 0
-            end
-        end
-    end
-    return L
-end
-
-function obstacle_factory.constructU()
-    --local U = {{1,0,0,1}, {1,0,0,1}, {1,0,0,1}, {1,1,1,1}}
-    local U = {}          -- create the matrix
+function obstacle_factory.constructU(x,y)
+    local U = { frame = {}, x = x, y = y, dx = 1, dy = 1 }
     local N, M = 4, 4
     for i=1,N do
       for j=1,M do
         if(i==1) or (i==4) or (((i==2) or (i==3)) and (j==4)) then
-            U[i*M+j] = 1
+            U.frame[i*M+j] = 1
+        else
+            U.frame[i*M+j] = 0
         end
       end
     end
     return U
 end
 
-
-
 -- I shape
-function obstacle_factory.constructI()
-    local I = {}
+function obstacle_factory.constructI(x,y)
+    local I = { frame = {}, x = x, y = y, dx = 1, dy = 1 }
     local N, M = 4, 4
     for i=1, N do
         for j=1, M do
             if (j == 2) then
-                I[i*M + j] = 1
+                I.frame[i*M + j] = 1
             else
-                I[i*M + j] = 0
+                I.frame[i*M + j] = 0
             end
         end
     end

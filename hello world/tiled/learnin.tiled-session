@@ -1,0 +1,82 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "#Aggregate": {
+            "dynamicWrapping": false
+        },
+        "#Industrial tileset": {
+            "dynamicWrapping": true
+        },
+        "#IndustrialTile_01": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "#IndustrialTile_02": {
+            "scaleInDock": 1
+        },
+        "#aggregated": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "first_scene.tmx#Aggregate": {
+            "dynamicWrapping": false
+        },
+        "first_scene.tmx#Objects": {
+            "dynamicWrapping": true
+        },
+        "tilesets/1 Tiles/aggregated.tmx": {
+            "scale": 2,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 472.5,
+                "y": 411.25
+            }
+        },
+        "tilesets/1 Tiles/aggregated.tmx#Aggregate": {
+            "dynamicWrapping": true,
+            "scaleInDock": 3
+        },
+        "tilesets/1 Tiles/aggregated.tmx#Background": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "tilesets/1 Tiles/aggregated.tmx#IndustrialTile_01": {
+            "dynamicWrapping": false
+        },
+        "tilesets/1 Tiles/aggregated.tmx#Objects": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1.5,
+            "scaleInEditor": 1
+        }
+    },
+    "last.exportedFilePath": "C:/Users/rlhug/love2d/hello world/maps",
+    "last.externalTilesetPath": "C:/Users/rlhug/Downloads",
+    "last.imagePath": "C:/Users/rlhug/tiled/tilesets/3 Objects",
+    "map.lastUsedExportFilter": "Lua files (*.lua)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 32,
+    "map.tileWidth": 32,
+    "openFiles": [
+    ],
+    "project": "learnin.tiled-project",
+    "recentFiles": [
+        "tilesets/1 Tiles/aggregated.tmx"
+    ],
+    "tileset.embedInMap": true,
+    "tileset.lastUsedFilter": "All Files (*)",
+    "tileset.tileSize": {
+        "height": 32,
+        "width": 32
+    },
+    "tileset.type": 1
+}
