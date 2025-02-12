@@ -23,6 +23,14 @@ function love.load()
         dx = -1,
         dy = 1
     }
+
+    obstacle_U_1 = {
+        frame = obstacle_factory.constructU(),
+        x = 150,
+        y = 150,
+        dx = -1,
+        dy = 1
+    }
     --local obstacle_I_1 = obstacle_factory.constructI()
 
     
@@ -87,6 +95,9 @@ function love.update(dt)
     bounce_a_thing(obstacle_L_1)
 
     move_a_thing_warp(obstacle_I_1)
+
+    move_a_thing_bounded(obstacle_U_1)
+    bounce_a_thing(obstacle_U_1)
 
 end
 
@@ -155,21 +166,23 @@ function love.draw()
     --love.graphics.print(number, 400, 300)
     --love.graphics.rectangle("fill", 50, rectangle_y, 50, 50)
     cloud.animations.weak:draw(cloud.spriteSheet, cloud.x, cloud.y, 0.1, 1)
-    drawobstacle(obstacle_L_1.frame, obstacle_L_1.x, obstacle_L_1.y)
-    drawobstacle(obstacle_I_1.frame, obstacle_I_1.x, obstacle_I_1.y)
+    drawobstacle(obstacle_L_1)
+    drawobstacle(obstacle_I_1)
+    drawobstacle(obstacle_U_1)
 
     --love.graphics.rectangle("fill", )
 
 end
 
-function drawobstacle(obstac, x, y)
-    local obst = obstac
+function drawobstacle(obstac)
+    local x, y = obstac.x, obstac.y
+    local frame = obstac.frame
     local M, N = 4, 4
     local start_pos_x = x
     local start_pos_y = y
     for i=1, N do
         for j=1, M do
-            if(obst[i*M + j] == 1) then
+            if(frame[i*M + j] == 1) then
                 --render rectangle 50x50
                 local new_x = start_pos_x + ((i-1)*50)
                 local new_y = start_pos_y + ((j-1)*50)
@@ -178,7 +191,7 @@ function drawobstacle(obstac, x, y)
         end
     end
 
-    love.graphics.print("x: " .. cloud.x .. " y: " .. cloud.y .. " cloud.dx " .. cloud.dx .. " cloud.dy " .. cloud.dy)
+    love.graphics.print("x: " .. obstac.x .. " y: " .. obstac.y, obstac.x, obstac.y)
 end
 
 function bounce_a_thing(thing)
