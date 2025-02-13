@@ -2,6 +2,6 @@
     "Lua.diagnostics.disable": [
         "undefined-global"
     ],
-    /*"pixelbyte.love2d.path": "C:\\Program Files\\LOVE\\love.exe"*/
-    "pixelbyte.love2d.path": "/Applications/love.app/Contents/MacOS/love"
+    "pixelbyte.love2d.path": "C:\\Program Files\\LOVE\\love.exe"
+    //"pixelbyte.love2d.path": "/Applications/love.app/Contents/MacOS/love"
 }

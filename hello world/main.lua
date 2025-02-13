@@ -1,5 +1,3 @@
-
-
 -- bring data as game starts
 function love.load()
     MAX_SPEED = 6
@@ -9,6 +7,7 @@ function love.load()
     bump = require 'libraries/bump'
     obstacle_factory = require './obstacle_factory'
     animated_object_factory = require './animated_object_factory'
+    lighting = require './lighting'
     camera = require 'libraries/camera'
     cam = camera()
 
@@ -36,11 +35,20 @@ function love.load()
     hammer_4.animations.turned_on:gotoFrame(5)
     hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
 
+    light_1 = animated_object_factory.constructLight(175,490) --not sure need to animate light turning on or off
+    
+    light_2 = animated_object_factory.constructLight(0,0)
+    move_with_cursor_bounded(light_2) --keep inside game on init
+
+    lighting.addDistanceLight(light_1, 300, 1.0, 1.0, 1.0)
+    lighting.addDistanceLight(light_2, 300, 1.0, 1.0, 1.0)
+
     --collision stuff
     world = bump.newWorld(32)
 
     world:add(cloud, 0, cloud.x, cloud.y, 32, 32)
     world:add(pipe_cloud,0,pipe_cloud.x,pipe_cloud.y, 32, 32)
+
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
@@ -92,6 +100,41 @@ function love.update(dt)
     hammer_3.animations.turned_on:update(dt)
     hammer_4.animations.turned_on:update(dt)
     hammer_5.animations.turned_on:update(dt)
+
+    move_with_cursor_bounded(light_2)
+
+    --toggle lights
+    if(love.keyboard.isDown("l") ) then
+        if (light_1.enabled == false) then
+            light_1.enabled = true
+        end
+        if (light_2.enabled == false) then
+            light_2.enabled = true
+        end
+    end
+    if(love.keyboard.isDown("o") ) then
+        if (light_1.enabled == true) then
+            light_1.enabled = false
+        end
+        if (light_2.enabled == true) then
+            light_2.enabled = false
+        end
+    end
+
+    --flicker lights
+    evaluate_flicker(light_1, dt)
+
+    if(light_1.enabled == true) then
+        light_1.animations.switch:gotoFrame(2)
+    else
+        light_1.animations.switch:gotoFrame(1)
+    end
+    if(light_2.enabled == true) then
+        light_2.animations.switch:gotoFrame(2)
+    else
+        light_2.animations.switch:gotoFrame(1)
+    end
+    
 
     move_a_thing_bounded(obstacle_L_1)
     bounce_a_thing(obstacle_L_1)
@@ -175,6 +218,28 @@ function move_a_thing_bounded(thing)
     end
 end
 
+    
+function move_with_cursor_bounded(thing)
+    local mx, my = love.mouse.getPosition()
+
+    if (mx) > WIDTH then
+        thing.x = WIDTH
+    elseif(mx) < 0 then
+        thing.x = 0
+    else
+        thing.x = mx
+    end
+    -- y
+    if (my) > HEIGHT then
+        thing.y = HEIGHT
+    elseif(my) < 0 then
+        thing.y = 0
+    else
+        thing.y = my
+    end
+end
+
+
 function move_a_thing_bounded_reset(thing)
     --world:add(thing,0,thing.x,thing.y, 32, 32)
     if not world:hasItem(thing) then
@@ -188,10 +253,7 @@ function move_a_thing_bounded_reset(thing)
     else
         --thing.x = thing.x + thing.dx
         local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.dx),thing.y)
-        if len > 0 then
-            debug_message = "Collision"
-        else
-            debug_message = "Freedom"
+        if not (len > 0) then
             thing.x = thing.x + thing.dx
         end
     end
@@ -203,10 +265,7 @@ function move_a_thing_bounded_reset(thing)
     else
         --thing.y = thing.y + thing.dy
         local actualX, actualY, cols, len = world:move(thing, thing.x,(thing.y+thing.dy))
-        if len > 0 then
-            debug_message = "Collision"
-        else
-            debug_message = "Freedom"
+        if not (len > 0) then
             thing.y = thing.y + thing.dy
         end
     end
@@ -232,26 +291,44 @@ function move_a_thing_warp(thing)
 end
 
 --
+
+local ofs = {0, 0}
+
 function love.draw()
+
     cam:attach()
-    --love.graphics.print(number, 400, 300)
-    --love.graphics.rectangle("fill", 50, rectangle_y, 50, 50)
+
+        --shader code
+        
         gameMap:drawLayer(gameMap.layers["Background"])
-        gameMap:drawLayer(gameMap.layers["Underground darkness"])
-        gameMap:drawLayer(gameMap.layers["Inner 1"])
-        gameMap:drawLayer(gameMap.layers["Middle"])
-        gameMap:drawLayer(gameMap.layers["Inner 2"])
+
+        -- distance light
+        lighting.startDistanceShading()
+
+        gameMap:drawLayer(gameMap.layers["Underbackground"])    
         hammer_1.animations.turned_on:draw(hammer_1.spriteSheet, hammer_1.x, hammer_1.y, 0)
         hammer_2.animations.turned_on:draw(hammer_2.spriteSheet, hammer_2.x, hammer_2.y, 0)
         hammer_3.animations.turned_on:draw(hammer_3.spriteSheet, hammer_3.x, hammer_3.y, 0)
         hammer_4.animations.turned_on:draw(hammer_4.spriteSheet, hammer_4.x, hammer_4.y, 0)
         hammer_5.animations.turned_on:draw(hammer_5.spriteSheet, hammer_5.x, hammer_5.y, 0)
+        lighting.endDistanceShading()
+        light_1.animations.switch:draw(light_1.spriteSheet, light_1.x, light_1.y)
+        light_2.animations.switch:draw(light_2.spriteSheet, light_2.x, light_2.y)
+        gameMap:drawLayer(gameMap.layers["Inner 1"])
+        gameMap:drawLayer(gameMap.layers["Middle"])
+        gameMap:drawLayer(gameMap.layers["Inner 2"])
+        
         cloud.animations.weak:draw(cloud.spriteSheet, cloud.x, cloud.y, 0.1, 1, 1, 32, 32)
         pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 32, 32)
+
         gameMap:drawLayer(gameMap.layers["Front"])
+
     cam:detach()
+
     love.graphics.print("HP: ", 10, 10)
     love.graphics.print("Debug: " .. debug_message, 10, 30)
+
+
     
     --drawobstacle(obstacle_L_1)
     --drawobstacle(obstacle_I_1)
@@ -291,4 +368,21 @@ function bounce_a_thing(thing)
     end
     thing.dx = new_dx
     thing.dy = new_dy
+end
+
+function evaluate_flicker(light, dt)
+    light.flickercount = light.flickercount + dt
+    --check if we should start a flicker
+    if ((not light.flicking) and (light.flickercount > light.flickerpoint) and light.enabled) then
+        light.flicking = true
+        light.enabled = false
+        light.flickercount = 0
+    end
+    --check if flicker finished
+    if((light.flicking) and (light.flickercount > light.flickerdepth)) then
+        light.flicking = false
+        light.enabled = true
+        light.flickercount = 0
+        light.flickerpoint = math.random(0.1,10.0)
+    end
 end

@@ -1,5 +1,6 @@
 local animated_object_factory = {
-    anim8 = require 'libraries/anim8'
+    anim8 = require 'libraries/anim8',
+    lighting = require 'lighting'
 }
 
 function animated_object_factory.constructHammer(name,x, y)
@@ -37,6 +38,29 @@ function animated_object_factory.constructCloud(name, x, y)
     cloud.animations = {}
     cloud.animations.weak = anim8.newAnimation(cloud.grid('3-2',3, '3-2',2 , 1,'3-2', '3-1', 1), 0.18)
     return cloud
+end
+
+--light
+function animated_object_factory.constructLight(x, y)
+    local light = {}
+    light.enabled = false
+    light.init_x = x
+    light.init_y = y
+    light.x = x
+    light.y = y
+    light.w = 32
+    light.h = 32
+    light.dx = 0
+    light.dy = 0
+    light.spriteSheet = love.graphics.newImage('sprites/lamp-Sheet.png')
+    light.grid = anim8.newGrid(32,32, light.spriteSheet:getWidth(), light.spriteSheet:getHeight())
+    light.animations = {}
+    light.animations.switch = anim8.newAnimation(light.grid('1-2',1), 2.5)
+    light.flickerpoint = math.random(0.1,10.0)
+    light.flickercount = 0
+    light.flickerdepth = 0.23 --length the light goes off in dt
+    light.flicking = false
+    return light
 end
 
 return animated_object_factory
