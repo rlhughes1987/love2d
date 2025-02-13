@@ -22,9 +22,11 @@ function love.load()
     obstacle_I_1 = obstacle_factory.constructI(250,100)
     obstacle_U_1 = obstacle_factory.constructU(150,150)
     
+    player = animated_object_factory.constructPlayer("Richard", 30, 30)
     
     cloud = animated_object_factory.constructCloud("player_cloud",10,10)
     pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",768,224)
+
     hammer_1 = animated_object_factory.constructHammer("hammer1",384,512)
     hammer_1.animations.turned_on:gotoFrame(2)
     hammer_2 = animated_object_factory.constructHammer("hammer2",416,512)
@@ -46,7 +48,7 @@ function love.load()
     --collision stuff
     world = bump.newWorld(32)
 
-    world:add(cloud, 0, cloud.x, cloud.y, 32, 32)
+    world:add(player, 0, player.x, player.y, 32, 32)
     world:add(pipe_cloud,0,pipe_cloud.x,pipe_cloud.y, 32, 32)
 
 end
@@ -57,38 +59,50 @@ function love.update(dt)
     local x_key_pressed = false
     local y_key_pressed = false
     if(love.keyboard.isDown("d")) then
-        if (MAX_SPEED > cloud.dx) then
-            cloud.dx = cloud.dx + 1
+        if (MAX_SPEED > player.dx) then
+            player.dx = player.dx + 1
         end
         x_key_pressed = true
     end
     if(love.keyboard.isDown("a")) then
-        if (-MAX_SPEED < cloud.dx) then
-            cloud.dx = cloud.dx - 1
+        if (-MAX_SPEED < player.dx) then
+            player.dx = player.dx - 1
         end
         x_key_pressed = true
     end
     if(love.keyboard.isDown("w")) then
-        if (-MAX_SPEED < cloud.dy) then
-            cloud.dy = cloud.dy - 1
+        if (-MAX_SPEED < player.dy) then
+            player.dy = player.dy - 1
         end
         y_key_pressed = true
     end
     if(love.keyboard.isDown("s")) then
-        if (MAX_SPEED > cloud.dy) then
-            cloud.dy = cloud.dy + 1
+        if (MAX_SPEED > player.dy) then
+            player.dy = player.dy + 1
         end
         y_key_pressed = true
     end
+    if(love.keyboard.isDown("space")) then
+        if (MAX_SPEED > player.dy) then
+            player.dy = player.dy - 1
+        end
+        player.current_animation = player.animations.jump
+        player.current_spritesheet = player.spriteSheets.jump
+        y_key_pressed = true
+    end
+    if(not love.keyboard.isDown("space")) then
+        player.current_animation = player.animations.walking
+        player.current_spritesheet = player.spriteSheets.walking
+    end
     if not x_key_pressed then
-        reduce_x_speed(cloud)
+        reduce_x_speed(player)
     end
     if not y_key_pressed then
-        reduce_y_speed(cloud)
+        reduce_y_speed(player)
     end
 
-    move_a_thing_bounded(cloud)
-    cloud.animations.weak:update(dt)
+    move_a_thing_bounded(player)
+    player.current_animation:update(dt)
 
 
     direct_a_thing_up(pipe_cloud)
@@ -144,7 +158,7 @@ function love.update(dt)
     move_a_thing_bounded(obstacle_U_1)
     bounce_a_thing(obstacle_U_1)
 
-    cam:lookAt(cloud.x, cloud.y)
+    cam:lookAt(player.x, player.y)
     local w = love.graphics.getWidth()
     local h = love.graphics.getHeight()
     --bound camera to left scene edge
@@ -167,7 +181,7 @@ function love.update(dt)
     end
 
     -- collision world
-    world:update(cloud, cloud.x, cloud.y, 32, 32)
+    world:update(player, player.x, player.y, 32, 32)
     world:update(pipe_cloud, pipe_cloud.x, pipe_cloud.y, 32, 32)
 
 end
@@ -318,7 +332,7 @@ function love.draw()
         gameMap:drawLayer(gameMap.layers["Middle"])
         gameMap:drawLayer(gameMap.layers["Inner 2"])
         
-        cloud.animations.weak:draw(cloud.spriteSheet, cloud.x, cloud.y, 0.1, 1, 1, 32, 32)
+        player.current_animation:draw(player.current_spritesheet, player.x, player.y, 0, 1.1, 1.1, 32, 32)
         pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 32, 32)
 
         gameMap:drawLayer(gameMap.layers["Front"])

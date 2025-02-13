@@ -3,6 +3,32 @@ local animated_object_factory = {
     lighting = require 'lighting'
 }
 
+function animated_object_factory.constructPlayer(name,x,y)
+    local player = {}
+    player.name = name
+    player.init_x = x
+    player.init_y = y
+    player.x = x
+    player.y = y
+    player.w = 32
+    player.h = 32
+    player.dx = 0
+    player.dy = 0
+    player.spriteSheets = {}
+    player.animations = {}
+    player.grids = {}
+    player.spriteSheets.walking = love.graphics.newImage('sprites/walking.png')
+    player.grids.walking = anim8.newGrid(96,84,player.spriteSheets.walking:getWidth(), player.spriteSheets.walking:getHeight())
+    player.animations.walking = anim8.newAnimation(player.grids.walking('1-8',1),0.15)
+    player.spriteSheets.jump = love.graphics.newImage('sprites/jump.png')
+    player.grids.jump = anim8.newGrid(96,84,player.spriteSheets.jump:getWidth(), player.spriteSheets.walking:getHeight())
+    player.animations.jump = anim8.newAnimation(player.grids.jump('1-3',1),0.15)
+    player.current_animation = player.animations.walking -- change to stationary
+    player.current_spritesheet = player.spriteSheets.walking
+    return player
+end
+
+
 function animated_object_factory.constructHammer(name,x, y)
     local hammer = {}
     hammer.name = name
@@ -17,7 +43,7 @@ function animated_object_factory.constructHammer(name,x, y)
     hammer.spriteSheet = love.graphics.newImage('sprites/Hammer.png')
     hammer.grid = anim8.newGrid(32,64, hammer.spriteSheet:getWidth(), hammer.spriteSheet:getHeight())
     hammer.animations = {}
-    hammer.animations.turned_on = anim8.newAnimation(hammer.grid('1-8',1), 0.18)
+    hammer.animations.turned_on = anim8.newAnimation(hammer.grid('1-8',1), 0.15)
     return hammer
 end
 
