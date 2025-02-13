@@ -12,19 +12,32 @@ function animated_object_factory.constructPlayer(name,x,y)
     player.y = y
     player.w = 32
     player.h = 32
-    player.dx = 0
-    player.dy = 0
+    player.velocity = {x=0,y=0}
     player.spriteSheets = {}
     player.animations = {}
     player.grids = {}
-    player.spriteSheets.walking = love.graphics.newImage('sprites/walking.png')
-    player.grids.walking = anim8.newGrid(96,84,player.spriteSheets.walking:getWidth(), player.spriteSheets.walking:getHeight())
-    player.animations.walking = anim8.newAnimation(player.grids.walking('1-8',1),0.15)
+
+    player.spriteSheets.walking_left = love.graphics.newImage('sprites/walk-left.png')
+    player.grids.walking_left = anim8.newGrid(96,84,player.spriteSheets.walking_left:getWidth(), player.spriteSheets.walking_left:getHeight())
+    player.animations.walking_left = anim8.newAnimation(player.grids.walking_left('1-8',1),0.15)
+
+    player.spriteSheets.walking_right = love.graphics.newImage('sprites/walk-right.png')
+    player.grids.walking_right = anim8.newGrid(96,84,player.spriteSheets.walking_right:getWidth(), player.spriteSheets.walking_right:getHeight())
+    player.animations.walking_right = anim8.newAnimation(player.grids.walking_right('1-8',1),0.15)
+
     player.spriteSheets.jump = love.graphics.newImage('sprites/jump.png')
-    player.grids.jump = anim8.newGrid(96,84,player.spriteSheets.jump:getWidth(), player.spriteSheets.walking:getHeight())
+    player.grids.jump = anim8.newGrid(96,84,player.spriteSheets.jump:getWidth(), player.spriteSheets.jump:getHeight())
     player.animations.jump = anim8.newAnimation(player.grids.jump('1-3',1),0.15)
-    player.current_animation = player.animations.walking -- change to stationary
-    player.current_spritesheet = player.spriteSheets.walking
+
+    player.spriteSheets.idle = love.graphics.newImage('sprites/idle.png')
+    player.grids.idle = anim8.newGrid(96,84,player.spriteSheets.idle:getWidth(), player.spriteSheets.idle:getHeight())
+    player.animations.idle = anim8.newAnimation(player.grids.idle('1-3',1),0.15)
+
+    player.current_animation = player.animations.idle -- change to stationary
+    player.current_spritesheet = player.spriteSheets.idle
+
+    player.scale = 1
+    
     return player
 end
 
@@ -38,8 +51,7 @@ function animated_object_factory.constructHammer(name,x, y)
     hammer.y = y
     hammer.w = 32
     hammer.h = 32
-    hammer.dx = 0
-    hammer.dy = 0
+    hammer.velocity = {x=0,y=0}
     hammer.spriteSheet = love.graphics.newImage('sprites/Hammer.png')
     hammer.grid = anim8.newGrid(32,64, hammer.spriteSheet:getWidth(), hammer.spriteSheet:getHeight())
     hammer.animations = {}
@@ -57,8 +69,7 @@ function animated_object_factory.constructCloud(name, x, y)
     cloud.y = y
     cloud.w = 32
     cloud.h = 32
-    cloud.dx = 0
-    cloud.dy = 0
+    cloud.velocity = {x=0,y=0}
     cloud.spriteSheet = love.graphics.newImage('sprites/vapor_cloud.png')
     cloud.grid = anim8.newGrid(64,64, cloud.spriteSheet:getWidth(), cloud.spriteSheet:getHeight())
     cloud.animations = {}
@@ -76,8 +87,7 @@ function animated_object_factory.constructLight(x, y)
     light.y = y
     light.w = 32
     light.h = 32
-    light.dx = 0
-    light.dy = 0
+    light.velocity = {x=0,y=0}
     light.spriteSheet = love.graphics.newImage('sprites/lamp-Sheet.png')
     light.grid = anim8.newGrid(32,32, light.spriteSheet:getWidth(), light.spriteSheet:getHeight())
     light.animations = {}

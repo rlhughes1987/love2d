@@ -1,6 +1,6 @@
 -- bring data as game starts
 function love.load()
-    MAX_SPEED = 6
+    MAX_SPEED = 1.6
     debug_message = ""
     --imports
     anim8 = require 'libraries/anim8'
@@ -55,41 +55,60 @@ function love.update(dt)
     local x_key_pressed = false
     local y_key_pressed = false
     if(love.keyboard.isDown("d")) then
-        if (MAX_SPEED > player.dx) then
-            player.dx = player.dx + 1
+        if (MAX_SPEED > player.velocity.x) then
+            player.velocity.x = player.velocity.x + 1
+            player.current_animation = player.animations.walking_right
         end
         x_key_pressed = true
     end
     if(love.keyboard.isDown("a")) then
-        if (-MAX_SPEED < player.dx) then
-            player.dx = player.dx - 1
+        if (-MAX_SPEED < player.velocity.x) then
+            player.velocity.x = player.velocity.x - 1
+            player.current_animation = player.animations.walking_left
         end
         x_key_pressed = true
     end
     if(love.keyboard.isDown("w")) then
-        if (-MAX_SPEED < player.dy) then
-            player.dy = player.dy - 1
+        if (-MAX_SPEED < player.velocity.y) then
+            player.velocity.y = player.velocity.y - 1
         end
         y_key_pressed = true
     end
     if(love.keyboard.isDown("s")) then
-        if (MAX_SPEED > player.dy) then
-            player.dy = player.dy + 1
+        if (MAX_SPEED > player.velocity.y) then
+            player.velocity.y = player.velocity.y + 1
         end
         y_key_pressed = true
     end
     if(love.keyboard.isDown("space")) then
-        if (MAX_SPEED > player.dy) then
-            player.dy = player.dy - 1
+        if (MAX_SPEED > player.velocity.y) then
+            player.velocity.y = player.velocity.y - 1
         end
         player.current_animation = player.animations.jump
         player.current_spritesheet = player.spriteSheets.jump
         y_key_pressed = true
     end
-    if(not love.keyboard.isDown("space")) then
-        player.current_animation = player.animations.walking
-        player.current_spritesheet = player.spriteSheets.walking
+    --flyings
+    if(player.velocity.y < 0) then
+        player.current_animation = player.animations.jump
+        player.current_spritesheet = player.spriteSheets.jump
     end
+
+    if(player.velocity.y == 0) then
+        if player.velocity.x > 0 then
+            player.current_animation = player.animations.walking_right
+            player.current_spritesheet = player.spriteSheets.walking_right
+        elseif player.velocity.x < 0 then
+            player.current_animation = player.animations.walking_left
+            player.current_spritesheet = player.spriteSheets.walking_left
+        end
+    end
+    if (player.velocity.x == 0 and player.velocity.y == 0) then
+        player.current_animation = player.animations.idle
+        player.current_spritesheet = player.spriteSheets.idle
+    end
+
+
     if not x_key_pressed then
         reduce_x_speed(player)
     end
@@ -98,6 +117,7 @@ function love.update(dt)
     end
 
     move_a_thing_bounded(player)
+    debug_message = "velocity: x: " .. player.velocity.x .. " y: " .. player.velocity.y .. " position: x: " .. player.x .. " position: y: " .. player.y
     player.current_animation:update(dt)
 
 
@@ -161,24 +181,24 @@ function love.update(dt)
 end
 
 function reduce_x_speed(thing)
-    if(thing.dx == 0) then
+    if(thing.velocity.x == 0) then
         return
     end
-    if(thing.dx < 0) then
-        thing.dx = thing.dx + 1
-    elseif(thing.dx > 0) then
-        thing.dx = thing.dx - 1
+    if(thing.velocity.x < 0) then
+        thing.velocity.x = thing.velocity.x + 1
+    elseif(thing.velocity.x > 0) then
+        thing.velocity.x = thing.velocity.x - 1
     end
 end
 
 function reduce_y_speed(thing)
-    if(thing.dy == 0) then
+    if(thing.velocity.y == 0) then
         return
     end
-    if(thing.dy < 0) then
-        thing.dy = thing.dy + 1
-    elseif(thing.dy > 0) then
-        thing.dy = thing.dy - 1
+    if(thing.velocity.y < 0) then
+        thing.velocity.y = thing.velocity.y + 1
+    elseif(thing.velocity.y > 0) then
+        thing.velocity.y = thing.velocity.y - 1
     end
 end
 
@@ -188,21 +208,30 @@ function direct_a_thing_up(thing)
 end
 
 function move_a_thing_bounded(thing)
+    if not world:hasItem(thing) then
+        world:add(thing,0,thing.x,thing.y, 32, 32)
+    end
     -- x
-    if (thing.x + thing.dx) > WIDTH then
+    if (thing.x + thing.velocity.x) > WIDTH then
         thing.x = WIDTH
-    elseif(thing.x + thing.dx) < 0 then
+    elseif(thing.x + thing.velocity.x) < 0 then
         thing.x = 0
     else
-        thing.x = thing.x + thing.dx
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.velocity.x),thing.y) --sim move
+        if not (len > 0) then --check any collision
+            thing.x = thing.x + thing.velocity.x --if none confirm move
+        end
     end
     -- y
-    if (thing.y + thing.dy) > HEIGHT then
+    if (thing.y + thing.velocity.y) > HEIGHT then
         thing.y = HEIGHT
-    elseif(thing.y + thing.dy) < 0 then
+    elseif(thing.y + thing.velocity.y) < 0 then
         thing.y = 0
     else
-        thing.y = thing.y + thing.dy
+        local actualX, actualY, cols, len = world:move(thing,thing.x,thing.y+thing.velocity.y) --sim move
+        if not (len > 0) then --check any collision
+            thing.y = thing.y + thing.velocity.y --if none confirm move
+        end
     end
 end
 
@@ -234,47 +263,45 @@ function move_a_thing_bounded_reset(thing)
         world:add(thing,0,thing.x,thing.y, 32, 32)
     end
     -- x
-    if (thing.x + thing.dx) > (WIDTH + 64) then --make sure object goes off screen first
+    if (thing.x + thing.velocity.x) > (WIDTH + 64) then --make sure object goes off screen first
         thing.x = thing.init_x
-    elseif(thing.x + thing.dx) < -64 then --make sure object goes off screen first
+    elseif(thing.x + thing.velocity.x) < -64 then --make sure object goes off screen first
         thing.x = thing.init_x
     else
-        --thing.x = thing.x + thing.dx
-        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.dx),thing.y)
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.velocity.x),thing.y)
         if not (len > 0) then
-            thing.x = thing.x + thing.dx
+            thing.x = thing.x + thing.velocity.x
         end
     end
     -- y
-    if (thing.y + thing.dy) > (HEIGHT + 64) then
+    if (thing.y + thing.velocity.y) > (HEIGHT + 64) then
         thing.y = thing.init_y
-    elseif(thing.y + thing.dy) < -64 then
+    elseif(thing.y + thing.velocity.y) < -64 then
         thing.y = thing.init_y
     else
-        --thing.y = thing.y + thing.dy
-        local actualX, actualY, cols, len = world:move(thing, thing.x,(thing.y+thing.dy))
+        local actualX, actualY, cols, len = world:move(thing, thing.x,(thing.y+thing.velocity.y))
         if not (len > 0) then
-            thing.y = thing.y + thing.dy
+            thing.y = thing.y + thing.velocity.y
         end
     end
 end
 
 function move_a_thing_warp(thing)
     -- x
-    if (thing.x + thing.dx) > (WIDTH+thing.dx) then
+    if (thing.x + thing.velocity.x) > (WIDTH+thing.velocity.x) then
         thing.x = 0
-    elseif(thing.x + thing.dx) < (0-thing.dx) then
+    elseif(thing.x + thing.velocity.x) < (0-thing.velocity.x) then
         thing.x = WIDTH
     else
-        thing.x = thing.x + thing.dx
+        thing.x = thing.x + thing.velocity.x
     end
     -- y
-    if (thing.y + thing.dy) > (HEIGHT+thing.dy) then
+    if (thing.y + thing.velocity.y) > (HEIGHT+thing.velocity.y) then
         thing.y = 0
-    elseif(thing.y + thing.dy) < (0-thing.dy) then
+    elseif(thing.y + thing.velocity.y) < (0-thing.velocity.y) then
         thing.y = HEIGHT
     else
-        thing.y = thing.y + thing.dy
+        thing.y = thing.y + thing.velocity.y
     end
 end
 
@@ -305,8 +332,8 @@ function love.draw()
         gameMap:drawLayer(gameMap.layers["Middle"])
         gameMap:drawLayer(gameMap.layers["Inner 2"])
         
-        player.current_animation:draw(player.current_spritesheet, player.x, player.y, 0, 1.1, 1.1, 32, 32)
-        pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 32, 32)
+        player.current_animation:draw(player.current_spritesheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
+        pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
 
         gameMap:drawLayer(gameMap.layers["Front"])
 
@@ -349,9 +376,11 @@ function bounce_a_thing(thing)
     local new_dy = thing.dy
     if (thing.y >= (HEIGHT)) or (thing.y <= 0) then
         new_dy = -new_dy
+        thing.velocity.y = -1 * thing.velocity.y
     end
     if (thing.x >= (WIDTH)) or (thing.x <= 0) then
         new_dx = -new_dx
+        thing.velocity.x = -1 * thing.velocity.x
     end
     thing.dx = new_dx
     thing.dy = new_dy
