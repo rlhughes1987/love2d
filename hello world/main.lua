@@ -38,12 +38,8 @@ function love.load()
     hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
 
     light_1 = animated_object_factory.constructLight(175,490) --not sure need to animate light turning on or off
-    
-    light_2 = animated_object_factory.constructLight(0,0)
-    move_with_cursor_bounded(light_2) --keep inside game on init
 
     lighting.addDistanceLight(light_1, 300, 1.0, 1.0, 1.0)
-    lighting.addDistanceLight(light_2, 300, 1.0, 1.0, 1.0)
 
     --collision stuff
     world = bump.newWorld(32)
@@ -115,48 +111,26 @@ function love.update(dt)
     hammer_4.animations.turned_on:update(dt)
     hammer_5.animations.turned_on:update(dt)
 
-    move_with_cursor_bounded(light_2)
-
     --toggle lights
     if(love.keyboard.isDown("l") ) then
         if (light_1.enabled == false) then
             light_1.enabled = true
-        end
-        if (light_2.enabled == false) then
-            light_2.enabled = true
         end
     end
     if(love.keyboard.isDown("o") ) then
         if (light_1.enabled == true) then
             light_1.enabled = false
         end
-        if (light_2.enabled == true) then
-            light_2.enabled = false
-        end
     end
 
     --flicker lights
     evaluate_flicker(light_1, dt)
-
+    --check lights on or off
     if(light_1.enabled == true) then
         light_1.animations.switch:gotoFrame(2)
     else
         light_1.animations.switch:gotoFrame(1)
     end
-    if(light_2.enabled == true) then
-        light_2.animations.switch:gotoFrame(2)
-    else
-        light_2.animations.switch:gotoFrame(1)
-    end
-    
-
-    move_a_thing_bounded(obstacle_L_1)
-    bounce_a_thing(obstacle_L_1)
-
-    move_a_thing_warp(obstacle_I_1)
-
-    move_a_thing_bounded(obstacle_U_1)
-    bounce_a_thing(obstacle_U_1)
 
     cam:lookAt(player.x, player.y)
     local w = love.graphics.getWidth()
@@ -327,7 +301,6 @@ function love.draw()
         hammer_5.animations.turned_on:draw(hammer_5.spriteSheet, hammer_5.x, hammer_5.y, 0)
         lighting.endDistanceShading()
         light_1.animations.switch:draw(light_1.spriteSheet, light_1.x, light_1.y)
-        light_2.animations.switch:draw(light_2.spriteSheet, light_2.x, light_2.y)
         gameMap:drawLayer(gameMap.layers["Inner 1"])
         gameMap:drawLayer(gameMap.layers["Middle"])
         gameMap:drawLayer(gameMap.layers["Inner 2"])
