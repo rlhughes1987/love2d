@@ -38,15 +38,63 @@ vec4 effect(vec4 color, Image image, vec2 uvs, vec2 screen_coords){
 
 ]]
 
-local lighting = {
+local god_ray_code = [[
+extern number decay;
+extern number density;
+extern number weight;
+extern vec2 lightPositionOnScreen;
+//uniform sampler2D firstPass;
+const number NUM_SAMPLES = 100 ;
 
-distance_shading = { shader = love.graphics.newShader(distance_shading_code), distance_lights = {} }
+ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords)
+{
+
+  vec2 deltaTextCoord = texture_coords - lightPositionOnScreen;
+ 
+  deltaTextCoord *= 1.0 / float(NUM_SAMPLES) * density;
+  number illuminationDecay = 1.0;
+  vec2 textCoo=texture_coords;
+ 
+  vec4 result=texture2D(texture, textCoo );
+  for(int i=0; i < NUM_SAMPLES ; i++)
+   {
+     	  textCoo -= deltaTextCoord;
+     	  vec4 sample = texture2D(texture, textCoo );
+          sample *= illuminationDecay * weight;
+          result += sample;
+          illuminationDecay *= decay;
+  } 
+  return result;
+}]]
+
+local lighting = {
+    distance_shading = { shader = love.graphics.newShader(distance_shading_code), distance_lights = {} },
+    godray_shading = { shader = love.graphics.newShader(god_ray_code), ray = nil }
 --extend
 }
 
 function lighting.addDistanceLight(light, power, r, g, b) -- pass light object and assign power and colour
     local powered_light = { lightobj = light, power = power, r = r, g = g, b = b}
     table.insert(lighting.distance_shading.distance_lights,powered_light)
+end
+
+function lighting.addGodRay(light, decay, density, weight)
+    local godray = {lightobj = light, decay = decay, density = density, weight = weight}
+    lighting.godray_shading.ray = godray
+end
+
+function lighting.startGodrayShading()
+    if lighting.godray_shading.ray.lightobj.enabled then
+        local ofs = {0,0}
+        --ofs[0], ofs[1] = love.graphics.transformPoint(lighting.godray_shading.ray.lightobj.x,lighting.godray_shading.ray.lightobj.y)
+        local shader = lighting.godray_shading.shader
+        love.graphics.setShader(shader)
+        shader:send("decay", lighting.godray_shading.ray.decay)
+        shader:send("density", lighting.godray_shading.ray.density)
+        shader:send("weight", lighting.godray_shading.ray.weight)
+        --shader:send("lightPositionOnScreen", ofs)
+        shader:send("lightPositionOnScreen", {0,0})
+    end
 end
 
 function lighting.startDistanceShading()
@@ -79,7 +127,7 @@ function lighting.startDistanceShading()
     end
 end
 
-function lighting.endDistanceShading()
+function lighting.endShading()
     love.graphics.setShader()
 end
 

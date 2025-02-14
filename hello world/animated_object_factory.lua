@@ -100,7 +100,7 @@ function animated_object_factory.constructCloud(name, x, y, world)
 end
 
 --light
-function animated_object_factory.constructLight(x, y, lighting)
+function animated_object_factory.constructLight(x, y, lighting, type)
     local light = {}
     light.enabled = false
     light.init_x = x
@@ -118,8 +118,14 @@ function animated_object_factory.constructLight(x, y, lighting)
     light.flickercount = 0
     light.flickerdepth = 0.23 --length the light goes off in dt
     light.flicking = false
-
-    lighting.addDistanceLight(light, 300, 1.0, 1.0, 1.0)
+    if type == "distance" then
+        lighting.addDistanceLight(light, 300, 1.0, 1.0, 1.0)
+    elseif type == "godray" then
+        lighting.addGodRay(light, 0.8, 0.4, 2)
+        --decay (~0.5-0.8)
+        --density (~0.2-0.4)
+        --weight (~0.5-2)
+    end
     return light
 end
 
@@ -130,8 +136,8 @@ function animated_object_factory.constructAnimatedTerrain(x, y, w, h, world)
     terrain.init_y = y
     terrain.x = x
     terrain.y = y
-    terrain.w = 32
-    terrain.h = 32
+    terrain.w = w
+    terrain.h = h
     terrain.hitbox = {xoff=0,yoff=0,width=w,height=h}
     terrain.velocity = {x=0,y=0}
     terrain.spriteSheets = {}

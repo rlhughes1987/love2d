@@ -12,25 +12,41 @@ function love.load()
     lighting = require './lighting'
     camera = require 'libraries/camera'
     cam = camera()
-    sti = require 'libraries/sti'
+    sti = require 'libraries/sti'  -- includes box2d and bump
     gameMap = sti('maps/industrial_area.lua')
+
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
 
     WIDTH = gameMap.width * gameMap.tilewidth
     HEIGHT = gameMap.height * gameMap.tileheight
 
     --collision world
-    world = bump.newWorld(32)    
+    world = bump.newWorld(32)
+
     player = animated_object_factory.constructPlayer("Richard", 30, 236, world)
     enemy = animated_object_factory.constructPlayer("Enemy", 300, 524, world)
     enemy2 = animated_object_factory.constructPlayer("Enemy2", 200, 524, world)
     pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
-    base_platform = animated_object_factory.constructAnimatedTerrain(0,HEIGHT-32,WIDTH,32, world)
-    middle_platform = animated_object_factory.constructAnimatedTerrain(0,448,192,32, world)
+
+    --try build collideables from map properties
+    floors = {}
+    if gameMap.layers["Floors"] then
+        for i, obj in pairs(gameMap.layers["Floors"].objects) do
+            local some_floor = animated_object_factory.constructAnimatedTerrain(obj.x,obj.y,obj.width,obj.height, world)
+            table.insert(floors,some_floor)
+        end
+    end
+
+    ladders = {}
+    if gameMap.layers["Ladders"] then
+        for i,obj in pairs(gameMap.layers["Ladders"].objects) do
+            
+        end
+    end
 
     --lighting
-    light_1 = animated_object_factory.constructLight(175,490, lighting) --not sure need to animate light turning on or off
-    light_2 = animated_object_factory.constructLight(WIDTH/2,0, lighting)
+    light_1 = animated_object_factory.constructLight(175,490, lighting, "distance") --not sure need to animate light turning on or off
+    light_2 = animated_object_factory.constructLight(0.1,0.1, lighting, "godray")
 
     --scene decoration -- TODO: Make hammers hitboxes dynamic and therefore collideable
     hammer_1 = animated_object_factory.constructHammer("hammer1",384,512)
@@ -160,16 +176,16 @@ function love.update(dt)
 
     --toggle lights
     if(love.keyboard.isDown("l") ) then
-        if (light_1.enabled == false) then
-            light_1.enabled = true
-        end
+        light_1.enabled = true
     end
-    if(love.keyboard.isDown("o") ) then
-        if (light_1.enabled == true) then
-            light_1.enabled = false
-        end
+    if(love.keyboard.isDown("g")) then
+        light_2.enabled = true
     end
-    light_2.enabled = true
+    if(love.keyboard.isDown("o") ) then -- off
+        light_1.enabled = false
+        light_2.enabled = false
+    end
+   
 
     --flicker lights
     evaluate_flicker(light_1, dt)
@@ -205,6 +221,7 @@ function love.update(dt)
     -- collision world
     world:update(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
     world:update(enemy, enemy.x+enemy.hitbox.xoff, enemy.y+enemy.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
+    world:update(enemy2, enemy2.x+enemy2.hitbox.xoff, enemy2.y+enemy2.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
     world:update(pipe_cloud, pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
 end
@@ -219,17 +236,6 @@ function physics(thing, dt)
     thing.velocity.y = thing.velocity.y + GRAVITY * dt
 	thing.velocity.x = thing.velocity.x * (1 - math.min(dt*thing.friction, 1))
     -- adjust velocity based on factors
-end
-
-function apply_gravitational_pull(thing)
-    local actualX, actualY, cols, len = world:move(thing, thing.x+thing.hitbox.xoff, thing.y+GRAVITY+thing.hitbox.yoff) --sim pull
-        if not (len > 0) then --check a collision
-            thing.y = thing.y + GRAVITY --if none confirm move
-            thing.velocity.y = GRAVITY
-        else
-            thing.x = actualX - thing.hitbox.xoff
-            thing.y = actualY - thing.hitbox.yoff
-        end
 end
 
 function reduce_x_speed(thing)
@@ -381,21 +387,24 @@ local ofs = {0, 0}
 
 function love.draw()
 
+
+
     cam:attach()
 
-        --shader code
+        --shading
+        gameMap:drawLayer(gameMap.layers["Background"])
+        
+
         -- distance light
         lighting.startDistanceShading()
-
-        gameMap:drawLayer(gameMap.layers["Background"])
-
         gameMap:drawLayer(gameMap.layers["Underbackground"])    
         hammer_1.animations.turned_on:draw(hammer_1.spriteSheet, hammer_1.x, hammer_1.y, 0)
         hammer_2.animations.turned_on:draw(hammer_2.spriteSheet, hammer_2.x, hammer_2.y, 0)
         hammer_3.animations.turned_on:draw(hammer_3.spriteSheet, hammer_3.x, hammer_3.y, 0)
         hammer_4.animations.turned_on:draw(hammer_4.spriteSheet, hammer_4.x, hammer_4.y, 0)
         hammer_5.animations.turned_on:draw(hammer_5.spriteSheet, hammer_5.x, hammer_5.y, 0)
-        lighting.endDistanceShading()
+        lighting.endShading()
+        lighting.startGodrayShading()
         light_1.animations.switch:draw(light_1.spriteSheet, light_1.x, light_1.y)
         gameMap:drawLayer(gameMap.layers["Inner 1"])
         gameMap:drawLayer(gameMap.layers["Middle"])
@@ -404,10 +413,17 @@ function love.draw()
         player.current_animation:draw(player.current_spritesheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
         love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
         enemy.current_animation:draw(enemy.current_spritesheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
+        enemy2.current_animation:draw(enemy2.current_spritesheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
         pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
         love.graphics.rectangle("line", pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
+       
         gameMap:drawLayer(gameMap.layers["Front"])
+        lighting:endShading()
+
+        for i=1, #floors do
+            love.graphics.rectangle("line",floors[i].x, floors[i].y, floors[i].w, floors[i].h)
+        end
 
     cam:detach()
 
