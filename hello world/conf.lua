@@ -5,7 +5,7 @@ function love.conf(t)
     -- version
     --t.version = "0.0.1"
     -- dev console (windows only)
-    t.console = false
+    t.console = true
     -- external drive save (android only)
     t.externalstorage = true
     -- gamma correct

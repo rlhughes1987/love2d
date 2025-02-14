@@ -1,6 +1,8 @@
 -- bring data as game starts
 function love.load()
-    MAX_SPEED = 1.6
+    MAX_SPEED = 16
+    MAX_CLIMB_SPEED = 0.8
+    GRAVITY = 12
     debug_message = ""
     --imports
     anim8 = require 'libraries/anim8'
@@ -10,7 +12,6 @@ function love.load()
     lighting = require './lighting'
     camera = require 'libraries/camera'
     cam = camera()
-
     sti = require 'libraries/sti'
     gameMap = sti('maps/industrial_area.lua')
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
@@ -18,15 +19,20 @@ function love.load()
     WIDTH = gameMap.width * gameMap.tilewidth
     HEIGHT = gameMap.height * gameMap.tileheight
 
-    obstacle_L_1 = obstacle_factory.constructL(150,50)
-    obstacle_I_1 = obstacle_factory.constructI(250,100)
-    obstacle_U_1 = obstacle_factory.constructU(150,150)
-    
-    player = animated_object_factory.constructPlayer("Richard", 30, 30)
-    
-    cloud = animated_object_factory.constructCloud("player_cloud",10,10)
-    pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",768,224)
+    --collision world
+    world = bump.newWorld(32)    
+    player = animated_object_factory.constructPlayer("Richard", 30, 236, world)
+    enemy = animated_object_factory.constructPlayer("Enemy", 300, 524, world)
+    enemy2 = animated_object_factory.constructPlayer("Enemy2", 200, 524, world)
+    pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
+    base_platform = animated_object_factory.constructAnimatedTerrain(0,HEIGHT-32,WIDTH,32, world)
+    middle_platform = animated_object_factory.constructAnimatedTerrain(0,448,192,32, world)
 
+    --lighting
+    light_1 = animated_object_factory.constructLight(175,490, lighting) --not sure need to animate light turning on or off
+    light_2 = animated_object_factory.constructLight(WIDTH/2,0, lighting)
+
+    --scene decoration -- TODO: Make hammers hitboxes dynamic and therefore collideable
     hammer_1 = animated_object_factory.constructHammer("hammer1",384,512)
     hammer_1.animations.turned_on:gotoFrame(2)
     hammer_2 = animated_object_factory.constructHammer("hammer2",416,512)
@@ -36,92 +42,113 @@ function love.load()
     hammer_4 = animated_object_factory.constructHammer("hammer4",480,512)
     hammer_4.animations.turned_on:gotoFrame(5)
     hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
-
-    light_1 = animated_object_factory.constructLight(175,490) --not sure need to animate light turning on or off
-
-    lighting.addDistanceLight(light_1, 300, 1.0, 1.0, 1.0)
-
-    --collision stuff
-    world = bump.newWorld(32)
-
-    world:add(player, 0, player.x, player.y, 32, 32)
-    world:add(pipe_cloud,0,pipe_cloud.x,pipe_cloud.y, 32, 32)
+    
 
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
 function love.update(dt)
-    
-    local x_key_pressed = false
-    local y_key_pressed = false
-    if(love.keyboard.isDown("d")) then
-        if (MAX_SPEED > player.velocity.x) then
-            player.velocity.x = player.velocity.x + 1
-            player.current_animation = player.animations.walking_right
-        end
-        x_key_pressed = true
+    -- player movement
+    --update velocity based on inputs
+    --right or left direction
+    if(love.keyboard.isDown("d")) and (math.abs(player.velocity.x) < MAX_SPEED) then
+        player.x_dir = 1
+        player.velocity.x = player.velocity.x + (MAX_SPEED * dt)
     end
-    if(love.keyboard.isDown("a")) then
-        if (-MAX_SPEED < player.velocity.x) then
-            player.velocity.x = player.velocity.x - 1
-            player.current_animation = player.animations.walking_left
-        end
-        x_key_pressed = true
+    if(love.keyboard.isDown("a") and (math.abs(player.velocity.x) < MAX_SPEED)) then
+        player.x_dir = -1
+        player.velocity.x = player.velocity.x - (MAX_SPEED * dt)
     end
-    if(love.keyboard.isDown("w")) then
-        if (-MAX_SPEED < player.velocity.y) then
-            player.velocity.y = player.velocity.y - 1
-        end
-        y_key_pressed = true
+    --up or down
+    --jump/fall
+    if((love.keyboard.isDown("space") and (not player.jumping))) then --if starting a jump or in the middle of a jump
+        player.velocity.y = -player.leg_power
+        player.jumping = true
+        player.climbing = false
+        player.falling = false
     end
-    if(love.keyboard.isDown("s")) then
-        if (MAX_SPEED > player.velocity.y) then
-            player.velocity.y = player.velocity.y + 1
-        end
-        y_key_pressed = true
+    --climb
+    if(love.keyboard.isDown("s") and can_climb(player) and player.velocity.y < MAX_CLIMB_SPEED) then
+        player.velocity.y = player.velocity.y + 1
+        player.climbing = true
+        player.falling = false
+        player.jumping = false
+    elseif(love.keyboard.isDown("w") and can_climb(player) and player.velocity.y > -MAX_CLIMB_SPEED) then
+        player.velocity.y = player.velocity.y - 1
+        player.climbing = true
+        player.falling = false
+        player.jumping = false
     end
-    if(love.keyboard.isDown("space")) then
-        if (MAX_SPEED > player.velocity.y) then
-            player.velocity.y = player.velocity.y - 1
-        end
-        player.current_animation = player.animations.jump
-        player.current_spritesheet = player.spriteSheets.jump
-        y_key_pressed = true
-    end
-    --flyings
-    if(player.velocity.y < 0) then
-        player.current_animation = player.animations.jump
-        player.current_spritesheet = player.spriteSheets.jump
+    --update velocity based on lack of inputs
+    --if not x_key_pressed then
+    --    reduce_x_speed(player)
+    --end
+    --if not y_key_pressed then
+    --    reduce_y_speed(player)
+    --end
+    if(player.jumping and player.velocity.y == 0) then
+        player.jumping = false
     end
 
+    --add gravity
+    physics(player,dt)
+    move_a_thing_bounded(player)
+    
+    
+    
+
+    --update animations based on velocity
+    --jumping
+    if(player.velocity.y ~= 0) then
+        if player.x_dir > 0 then
+            player.current_animation = player.animations.jump_right
+            player.current_spritesheet = player.spriteSheets.jump_right
+        elseif player.x_dir < 0 then
+            player.current_animation = player.animations.jump_left
+            player.current_spritesheet = player.spriteSheets.jump_left
+        end
+    end
+    --walking
     if(player.velocity.y == 0) then
-        if player.velocity.x > 0 then
+        if player.x_dir > 0 then
             player.current_animation = player.animations.walking_right
             player.current_spritesheet = player.spriteSheets.walking_right
-        elseif player.velocity.x < 0 then
+        elseif player.x_dir < 0 then
             player.current_animation = player.animations.walking_left
             player.current_spritesheet = player.spriteSheets.walking_left
         end
     end
-    if (player.velocity.x == 0 and player.velocity.y == 0) then
-        player.current_animation = player.animations.idle
-        player.current_spritesheet = player.spriteSheets.idle
+    --idle
+    if (player.velocity.x ==0 and player.velocity.y == 0) then
+        if(player.x_dir < 0) then
+            player.current_animation = player.animations.idle_left
+            player.current_spritesheet = player.spriteSheets.idle_left
+        else
+            player.current_animation = player.animations.idle_right
+            player.current_spritesheet = player.spriteSheets.idle_right
+        end
     end
 
-
-    if not x_key_pressed then
-        reduce_x_speed(player)
-    end
-    if not y_key_pressed then
-        reduce_y_speed(player)
-    end
-
-    move_a_thing_bounded(player)
-    debug_message = "velocity: x: " .. player.velocity.x .. " y: " .. player.velocity.y .. " position: x: " .. player.x .. " position: y: " .. player.y
+  
+    
+    --debug_message = "velocity: x: " .. player.velocity.x .. " y: " .. player.velocity.y .. " position: x: " .. player.x .. " position: y: " .. player.y
     player.current_animation:update(dt)
 
 
-    direct_a_thing_up(pipe_cloud)
+    -- TO DO: Generate automatic movement of enemy
+    move_a_thing_bounded(enemy)
+    enemy.current_animation:update(dt)
+
+    move_a_thing_bounded(enemy2)
+    enemy2.current_animation:update(dt)
+
+
+    
+    
+
+    -- Scene animations
+    --pipe cloud
+    direct_a_thing_up(pipe_cloud,1)
     move_a_thing_bounded_reset(pipe_cloud)
     pipe_cloud.animations.weak:update(dt)
 
@@ -142,6 +169,7 @@ function love.update(dt)
             light_1.enabled = false
         end
     end
+    light_2.enabled = true
 
     --flicker lights
     evaluate_flicker(light_1, dt)
@@ -175,18 +203,45 @@ function love.update(dt)
     end
 
     -- collision world
-    world:update(player, player.x, player.y, 32, 32)
-    world:update(pipe_cloud, pipe_cloud.x, pipe_cloud.y, 32, 32)
+    world:update(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+    world:update(enemy, enemy.x+enemy.hitbox.xoff, enemy.y+enemy.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
+    world:update(pipe_cloud, pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
 end
 
+function can_climb(thing)
+    return true
+end
+
+function physics(thing, dt)
+    -- move done outside
+    --debug_message = "x= " .. thing.x .. " y=" .. thing.y .. " velocity.x= " .. thing.velocity.x .. " velocity.y=" .. thing.velocity.y .. " -MAX_SPEED=" .. -MAX_SPEED
+    thing.velocity.y = thing.velocity.y + GRAVITY * dt
+	thing.velocity.x = thing.velocity.x * (1 - math.min(dt*thing.friction, 1))
+    -- adjust velocity based on factors
+end
+
+function apply_gravitational_pull(thing)
+    local actualX, actualY, cols, len = world:move(thing, thing.x+thing.hitbox.xoff, thing.y+GRAVITY+thing.hitbox.yoff) --sim pull
+        if not (len > 0) then --check a collision
+            thing.y = thing.y + GRAVITY --if none confirm move
+            thing.velocity.y = GRAVITY
+        else
+            thing.x = actualX - thing.hitbox.xoff
+            thing.y = actualY - thing.hitbox.yoff
+        end
+end
+
 function reduce_x_speed(thing)
+    
     if(thing.velocity.x == 0) then
         return
     end
     if(thing.velocity.x < 0) then
+        thing.x_dir = thing.velocity.x
         thing.velocity.x = thing.velocity.x + 1
     elseif(thing.velocity.x > 0) then
+        thing.x_dir = thing.velocity.x
         thing.velocity.x = thing.velocity.x - 1
     end
 end
@@ -202,37 +257,52 @@ function reduce_y_speed(thing)
     end
 end
 
-function direct_a_thing_up(thing)
-    thing.dx = 0
-    thing.dy = -1
+function direct_a_thing_up(thing, speed)
+    thing.velocity.x = 0
+    thing.velocity.y = -speed
 end
 
 function move_a_thing_bounded(thing)
     if not world:hasItem(thing) then
-        world:add(thing,0,thing.x,thing.y, 32, 32)
+        world:add(thing,thing.x+thing.hitbox.xoff,thing.y+thing.hitbox.yoff, thing.hitbox.width, thing.hitbox.height)
     end
     -- x
-    if (thing.x + thing.velocity.x) > WIDTH then
-        thing.x = WIDTH
-    elseif(thing.x + thing.velocity.x) < 0 then
-        thing.x = 0
+    if((thing.x+thing.velocity.x+thing.hitbox.xoff+thing.hitbox.width) > WIDTH) then --dont touch
+        thing.x = WIDTH - thing.hitbox.xoff - thing.hitbox.width
+        thing.velocity.x = 0
+    elseif((thing.x+thing.velocity.x+thing.hitbox.xoff) < 0) then --dont touch
+        thing.x = 0 - thing.hitbox.xoff
+        thing.velocity.x = 0
     else
-        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.velocity.x),thing.y) --sim move
-        if not (len > 0) then --check any collision
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.velocity.x+thing.hitbox.xoff),(thing.y+thing.hitbox.yoff)) -- sim move
+        if not (len > 0) then --if no collision
             thing.x = thing.x + thing.velocity.x --if none confirm move
+        else
+            --stop characters motion if collided
+            thing.velocity.x = 0
+        end
+        if math.abs(thing.velocity.x) < 0.01 then -- check for tiny floats to prevent sliding
+            thing.velocity.x = 0
         end
     end
     -- y
-    if (thing.y + thing.velocity.y) > HEIGHT then
-        thing.y = HEIGHT
-    elseif(thing.y + thing.velocity.y) < 0 then
-        thing.y = 0
+    --if math.abs(thing.velocity.y) < 0.01 then --check for tiny floats
+    --    thing.velocity.y = 0
+    --end
+    local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.hitbox.xoff),(thing.y+thing.velocity.y+thing.hitbox.yoff)) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
+    if not (len > 0) then --check any collision
+        thing.y = thing.y + thing.velocity.y --if none confirm move
     else
-        local actualX, actualY, cols, len = world:move(thing,thing.x,thing.y+thing.velocity.y) --sim move
-        if not (len > 0) then --check any collision
-            thing.y = thing.y + thing.velocity.y --if none confirm move
-        end
+        thing.velocity.y = 0
     end
+    if (thing.y+thing.hitbox.yoff+thing.hitbox.height > HEIGHT) then
+        thing.y = HEIGHT-thing.h+thing.hitbox.height
+        thing.velocity.y = 0
+    elseif ((thing.y+thing.hitbox.yoff < 0) ) then
+        thing.y = 0
+        thing.velocity.y = 0
+    end
+
 end
 
     
@@ -260,7 +330,7 @@ end
 function move_a_thing_bounded_reset(thing)
     --world:add(thing,0,thing.x,thing.y, 32, 32)
     if not world:hasItem(thing) then
-        world:add(thing,0,thing.x,thing.y, 32, 32)
+        world:add(thing,thing.x+thing.hitbox.xoff,thing.y+thing.hitbox.yoff, thing.hitbox.width, thing.hitbox.height)
     end
     -- x
     if (thing.x + thing.velocity.x) > (WIDTH + 64) then --make sure object goes off screen first
@@ -268,7 +338,7 @@ function move_a_thing_bounded_reset(thing)
     elseif(thing.x + thing.velocity.x) < -64 then --make sure object goes off screen first
         thing.x = thing.init_x
     else
-        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.velocity.x),thing.y)
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.velocity.x+thing.hitbox.xoff),thing.y+thing.hitbox.yoff)
         if not (len > 0) then
             thing.x = thing.x + thing.velocity.x
         end
@@ -279,7 +349,7 @@ function move_a_thing_bounded_reset(thing)
     elseif(thing.y + thing.velocity.y) < -64 then
         thing.y = thing.init_y
     else
-        local actualX, actualY, cols, len = world:move(thing, thing.x,(thing.y+thing.velocity.y))
+        local actualX, actualY, cols, len = world:move(thing, thing.x+thing.hitbox.xoff,(thing.y+thing.velocity.y+thing.hitbox.yoff))
         if not (len > 0) then
             thing.y = thing.y + thing.velocity.y
         end
@@ -314,11 +384,10 @@ function love.draw()
     cam:attach()
 
         --shader code
-        
-        gameMap:drawLayer(gameMap.layers["Background"])
-
         -- distance light
         lighting.startDistanceShading()
+
+        gameMap:drawLayer(gameMap.layers["Background"])
 
         gameMap:drawLayer(gameMap.layers["Underbackground"])    
         hammer_1.animations.turned_on:draw(hammer_1.spriteSheet, hammer_1.x, hammer_1.y, 0)
@@ -333,7 +402,10 @@ function love.draw()
         gameMap:drawLayer(gameMap.layers["Inner 2"])
         
         player.current_animation:draw(player.current_spritesheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
+        love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+        enemy.current_animation:draw(enemy.current_spritesheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
         pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
+        love.graphics.rectangle("line", pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
         gameMap:drawLayer(gameMap.layers["Front"])
 
