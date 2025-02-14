@@ -30,17 +30,20 @@ function love.load()
 
     --try build collideables from map properties
     floors = {}
+    local floor_type = "floor"
     if gameMap.layers["Floors"] then
         for i, obj in pairs(gameMap.layers["Floors"].objects) do
-            local some_floor = animated_object_factory.constructAnimatedTerrain(obj.x,obj.y,obj.width,obj.height, world)
+            local some_floor = animated_object_factory.constructAnimatedTerrain(floor_type, obj.x,obj.y,obj.width,obj.height, world)
             table.insert(floors,some_floor)
         end
     end
-
+    
     ladders = {}
+    local ladder_type = "ladder"
     if gameMap.layers["Ladders"] then
         for i,obj in pairs(gameMap.layers["Ladders"].objects) do
-            
+            local some_floor = animated_object_factory.constructAnimatedTerrain(ladder_type, obj.x,obj.y,obj.width,obj.height, world)
+            table.insert(floors,some_floor)
         end
     end
 
@@ -81,19 +84,12 @@ function love.update(dt)
         player.velocity.y = -player.leg_power
         player.jumping = true
         player.climbing = false
-        player.falling = false
     end
     --climb
     if(love.keyboard.isDown("s") and can_climb(player) and player.velocity.y < MAX_CLIMB_SPEED) then
         player.velocity.y = player.velocity.y + 1
-        player.climbing = true
-        player.falling = false
-        player.jumping = false
     elseif(love.keyboard.isDown("w") and can_climb(player) and player.velocity.y > -MAX_CLIMB_SPEED) then
         player.velocity.y = player.velocity.y - 1
-        player.climbing = true
-        player.falling = false
-        player.jumping = false
     end
     --update velocity based on lack of inputs
     --if not x_key_pressed then
@@ -107,7 +103,12 @@ function love.update(dt)
     end
 
     --add gravity
-    physics(player,dt)
+    if player.climbing then
+        ladder_physics(player,dt)
+    else
+        physics(player,dt)
+    end
+
     move_a_thing_bounded(player)
     
     
@@ -144,10 +145,17 @@ function love.update(dt)
             player.current_spritesheet = player.spriteSheets.idle_right
         end
     end
+    --climbing
+    if (player.climbing) then
+        if (player.velocity.y ~= 0) then
+            player.current_animation = player.animations.climbing
+            player.current_spritesheet = player.spriteSheets.climbing
+        else
+            player.current_animation = player.animations.idle_climbing
+            player.current_spritesheet = player.spriteSheets.idle_climbing
+        end
+    end
 
-  
-    
-    --debug_message = "velocity: x: " .. player.velocity.x .. " y: " .. player.velocity.y .. " position: x: " .. player.x .. " position: y: " .. player.y
     player.current_animation:update(dt)
 
 
@@ -238,6 +246,12 @@ function physics(thing, dt)
     -- adjust velocity based on factors
 end
 
+function ladder_physics(thing, dt)
+    thing.velocity.y = thing.velocity.y * (1 - math.min(dt*thing.friction, 1))
+	thing.velocity.x = thing.velocity.x * (1 - math.min(dt*thing.friction, 1))
+end
+
+
 function reduce_x_speed(thing)
     
     if(thing.velocity.x == 0) then
@@ -284,7 +298,6 @@ function move_a_thing_bounded(thing)
         if not (len > 0) then --if no collision
             thing.x = thing.x + thing.velocity.x --if none confirm move
         else
-            --stop characters motion if collided
             thing.velocity.x = 0
         end
         if math.abs(thing.velocity.x) < 0.01 then -- check for tiny floats to prevent sliding
@@ -298,8 +311,28 @@ function move_a_thing_bounded(thing)
     local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.hitbox.xoff),(thing.y+thing.velocity.y+thing.hitbox.yoff)) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
     if not (len > 0) then --check any collision
         thing.y = thing.y + thing.velocity.y --if none confirm move
+        print("no vertical collision")
     else
-        thing.velocity.y = 0
+        --check if ladder movement
+        --print("collision count: " .. len)
+        local floors_collided = 0
+        local touching_ladder = false
+        for i=1, #cols do
+            if cols[i].other.type == "ladder" then
+                --dont block
+                player.climbing = true
+                player.jumping = false
+                print("climbing vertical. player.climbing= " .. tostring(player.climbing) .. " collisions count: " .. #cols)
+            elseif cols[i].other.type == "floor" then
+                floors_collided = floors_collided + 1
+            end
+        end
+        if (player.climbing or floors_collided == 0) then
+            thing.y = thing.y + thing.velocity.y
+        else
+            thing.velocity.y = 0
+        end
+        
     end
     if (thing.y+thing.hitbox.yoff+thing.hitbox.height > HEIGHT) then
         thing.y = HEIGHT-thing.h+thing.hitbox.height

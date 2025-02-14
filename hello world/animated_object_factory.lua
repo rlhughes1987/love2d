@@ -39,11 +39,19 @@ function animated_object_factory.constructPlayer(name,x,y, world)
 
     player.spriteSheets.idle_left = love.graphics.newImage('sprites/idle-left.png')
     player.grids.idle_left = anim8.newGrid(96,84,player.spriteSheets.idle_left:getWidth(), player.spriteSheets.idle_left:getHeight())
-    player.animations.idle_left = anim8.newAnimation(player.grids.idle_left('1-3',1),0.15)
+    player.animations.idle_left = anim8.newAnimation(player.grids.idle_left('1-7',1),0.15)
 
     player.spriteSheets.idle_right = love.graphics.newImage('sprites/idle-right.png')
     player.grids.idle_right = anim8.newGrid(96,84,player.spriteSheets.idle_right:getWidth(), player.spriteSheets.idle_right:getHeight())
-    player.animations.idle_right = anim8.newAnimation(player.grids.idle_right('1-3',1),0.15)
+    player.animations.idle_right = anim8.newAnimation(player.grids.idle_right('1-7',1),0.15)
+
+    player.spriteSheets.climbing = love.graphics.newImage('sprites/climbing.png')
+    player.grids.climbing = anim8.newGrid(96,84,player.spriteSheets.climbing:getWidth(), player.spriteSheets.climbing:getHeight())
+    player.animations.climbing = anim8.newAnimation(player.grids.climbing('1-8',1),0.15)
+
+    player.spriteSheets.idle_climbing = love.graphics.newImage('sprites/idle-climbing.png')
+    player.grids.idle_climbing = anim8.newGrid(96,84,player.spriteSheets.idle_climbing:getWidth(), player.spriteSheets.idle_climbing:getHeight())
+    player.animations.idle_climbing = anim8.newAnimation(player.grids.idle_climbing('1-7',1),0.15)
 
     player.current_animation = (math.random(0,1)==0) and player.animations.idle_left or player.animations.idle_right -- randomize starting facing
     player.current_spritesheet = (math.random(0,1)==0) and player.spriteSheets.idle_left or player.spriteSheets.idle_right 
@@ -52,7 +60,6 @@ function animated_object_factory.constructPlayer(name,x,y, world)
     player.leg_power = 4 --jump velocity
     player.jumping = false
     player.climbing = false
-    player.falling = true -- gravity, let collision stop character dropping off screen
     player.friction = 7
 
     --add to collideable world
@@ -130,8 +137,9 @@ function animated_object_factory.constructLight(x, y, lighting, type)
 end
 
 --collideable terrain
-function animated_object_factory.constructAnimatedTerrain(x, y, w, h, world)
+function animated_object_factory.constructAnimatedTerrain(type, x, y, w, h, world)
     local terrain = {}
+    terrain.type = type --ladder or floor
     terrain.init_x = x
     terrain.init_y = y
     terrain.x = x
