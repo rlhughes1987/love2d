@@ -63,8 +63,6 @@ function love.load()
     hammer_4 = animated_object_factory.constructHammer("hammer4",480,512)
     hammer_4.animations.turned_on:gotoFrame(5)
     hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
-    
-
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
@@ -295,25 +293,13 @@ end
 
 function move_a_thing_bounded(thing, dt)
 
-    local initial_x = thing.x
-    local initial_xvel = thing.velocity.x
-    local initial_y = thing.y
-    local initial_yvel = thing.velocity.y
-
-    local desired_x = initial_x + initial_xvel
-    local desired_y = initial_y + initial_yvel
-
-    local result_x = desired_x
-    local result_y = desired_y
-    local result_xvel = initial_xvel
-    local result_yvel = initial_yvel
-
-
     if not world:hasItem(thing) then
         world:add(thing,thing.x+thing.hitbox.xoff,thing.y+thing.hitbox.yoff, thing.hitbox.width, thing.hitbox.height)
     end
     -- x
-
+    if math.abs(thing.velocity.x) < 0.1 then -- check for tiny floats to prevent sliding
+        thing.velocity.x = 0
+    end
     if((thing.x+thing.velocity.x+thing.hitbox.xoff+thing.hitbox.width) > WIDTH) then --dont touch
         thing.x = WIDTH - thing.hitbox.xoff - thing.hitbox.width
         thing.velocity.x = 0
@@ -322,9 +308,9 @@ function move_a_thing_bounded(thing, dt)
         thing.velocity.x = 0
     else
         -- test x direction
-        local actualX, actualY, cols, len = world:move(thing,(desired_x+thing.hitbox.xoff),(initial_y+thing.hitbox.yoff)) -- sim move
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.velocity.x+thing.hitbox.xoff),(thing.y+thing.hitbox.yoff)) -- sim move
         if not (len > 0) then --if no collision
-            result_x = desired_x --if none confirm move
+            thing.x = thing.x + thing.velocity.x --if none confirm move
         else
             local floors_collided = 0
             local ladders_collided = 0
@@ -340,29 +326,27 @@ function move_a_thing_bounded(thing, dt)
                 end
             end
             if(floors_collided > 0) then
+                thing.velocity.x = 0
                 print("x - floors_collided: " .. floors_collided .. " ladders collided: " .. ladders_collided)
-                result_xvel = 0
             end
-            result_x = initial_x + result_xvel
+            thing.x = thing.x + thing.velocity.x
         end
-
     end
     -- y
+    if math.abs(thing.velocity.y) < 0.1 then -- check for tiny floats to prevent sliding
+        thing.velocity.y = 0
+    end
     if (thing.y+thing.hitbox.yoff+thing.hitbox.height > HEIGHT) then
-        --thing.y = HEIGHT-thing.h+thing.hitbox.height
-        --thing.velocity.y = 0
-        result_y = HEIGHT-thing.h+thing.hitbox.height
-        result_yvel = 0
+        thing.y = HEIGHT-thing.h+thing.hitbox.height
+        thing.velocity.y = 0
     elseif ((thing.y+thing.hitbox.yoff < 0) ) then
-        --thing.y = 0
-        --thing.velocity.y = 0
-        result_y = 0
-        result_yvel = 0
+        thing.y = 0
+        thing.velocity.y = 0
     else
-        local actualX, actualY, cols, len = world:move(thing,(initial_x+thing.hitbox.xoff),(desired_y+thing.hitbox.yoff)) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.hitbox.xoff),(thing.y+thing.velocity.y+thing.hitbox.yoff)) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
         if not (len > 0) then --check any collision
             --thing.y = thing.y + thing.velocity.y --if none confirm move
-            result_y = desired_y
+            thing.y = thing.y + thing.velocity.y
         else
             local floors_collided = 0
             local ladders_collided = 0
@@ -379,27 +363,12 @@ function move_a_thing_bounded(thing, dt)
             end
             if(floors_collided > 0) then
                 print("y - floors_collided: " .. floors_collided .. " ladders collided: " .. ladders_collided)
-                --thing.velocity.y = 0
-                result_yvel = 0
+                thing.velocity.y = 0
                 thing.climbing = false
                 thing.jumping = false
             end
-            --thing.y = thing.y + thing.velocity.y
-            result_y = initial_y + result_yvel
+            thing.y = thing.y + thing.velocity.y        
         end
-    end
-    -- result
-    thing.x = result_x
-    thing.velocity.x = result_xvel
-    thing.y = result_y
-    thing.velocity.y = result_yvel
-
-    -- floor velocity
-    if math.abs(thing.velocity.x) < 0.1 then -- check for tiny floats to prevent sliding
-        thing.velocity.x = 0
-    end
-    if math.abs(thing.velocity.y) < 0.1 then -- check for tiny floats to prevent sliding
-        thing.velocity.y = 0
     end
 end
 
@@ -520,7 +489,6 @@ function love.draw()
     cam:detach()
 
     love.graphics.print("HP: ", 10, 10)
-    debug_message = "player.jumping: " .. tostring(player.jumping) .. " player.climbing: " .. tostring(player.climbing) .. " player base (y): " .. player.y+player.hitbox.yoff+player.hitbox.height
     love.graphics.print("Debug: " .. debug_message, 10, 30)
 
 
