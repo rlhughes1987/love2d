@@ -439,11 +439,12 @@ function love.draw()
     cam:attach()
 
         --shading
+        lighting.startDistanceShading()
         gameMap:drawLayer(gameMap.layers["Background"])
         
 
         -- distance light
-        lighting.startDistanceShading()
+        
         gameMap:drawLayer(gameMap.layers["Underbackground"])    
         hammer_1.animations.turned_on:draw(hammer_1.spriteSheet, hammer_1.x, hammer_1.y, 0)
         hammer_2.animations.turned_on:draw(hammer_2.spriteSheet, hammer_2.x, hammer_2.y, 0)
