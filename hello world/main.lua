@@ -3,6 +3,8 @@ function love.load()
     MAX_SPEED = 16
     MAX_CLIMB_SPEED = 0.8
     GRAVITY = 12
+    LADDER_TERRAIN_TYPE = "ladder"
+    FLOOR_TERRAIN_TYPE = "floor"
     debug_message = ""
     --imports
     anim8 = require 'libraries/anim8'
@@ -109,7 +111,7 @@ function love.update(dt)
         physics(player,dt)
     end
 
-    move_a_thing_bounded(player)
+    move_a_thing_bounded(player,dt)
     
     
     
@@ -282,11 +284,14 @@ function direct_a_thing_up(thing, speed)
     thing.velocity.y = -speed
 end
 
-function move_a_thing_bounded(thing)
+function move_a_thing_bounded(thing, dt)
     if not world:hasItem(thing) then
         world:add(thing,thing.x+thing.hitbox.xoff,thing.y+thing.hitbox.yoff, thing.hitbox.width, thing.hitbox.height)
     end
     -- x
+    if math.abs(thing.velocity.x) < 0.1 then -- check for tiny floats to prevent sliding
+        thing.velocity.x = 0
+    end
     if((thing.x+thing.velocity.x+thing.hitbox.xoff+thing.hitbox.width) > WIDTH) then --dont touch
         thing.x = WIDTH - thing.hitbox.xoff - thing.hitbox.width
         thing.velocity.x = 0
@@ -298,41 +303,29 @@ function move_a_thing_bounded(thing)
         if not (len > 0) then --if no collision
             thing.x = thing.x + thing.velocity.x --if none confirm move
         else
-            thing.velocity.x = 0
+            local floors_collided = 0
+            local ladders_collided = 0
+            for i=1, len do
+                if cols[i].other.type == LADDER_TERRAIN_TYPE then
+                    --dont block but dont set as climbing necessarily
+                    ladders_collided = ladders_collided + 1
+                elseif cols[i].other.type == FLOOR_TERRAIN_TYPE then
+                    --print("xdir - floor collided x: " .. cols[i].other.x .. " y: ".. cols[i].other.y .. " w: " .. cols[i].other.w .. " h: " .. cols[i].other.h)
+                    --print("xdir - item  x: " .. cols[i].item.x .. " y: ".. cols[i].item.y .. " w: " .. cols[i].item.w .. " h: " .. cols[i].item.h)
+                    --print("xdir - person.climbing=" .. tostring(thing.climbing))
+                    floors_collided = floors_collided + 1
+                end
+            end
+            if(floors_collided > 0) then
+                thing.velocity.x = 0
+            end
+            thing.x = thing.x + thing.velocity.x
         end
-        if math.abs(thing.velocity.x) < 0.01 then -- check for tiny floats to prevent sliding
-            thing.velocity.x = 0
-        end
+
     end
     -- y
-    --if math.abs(thing.velocity.y) < 0.01 then --check for tiny floats
-    --    thing.velocity.y = 0
-    --end
-    local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.hitbox.xoff),(thing.y+thing.velocity.y+thing.hitbox.yoff)) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
-    if not (len > 0) then --check any collision
-        thing.y = thing.y + thing.velocity.y --if none confirm move
-        print("no vertical collision")
-    else
-        --check if ladder movement
-        --print("collision count: " .. len)
-        local floors_collided = 0
-        local touching_ladder = false
-        for i=1, #cols do
-            if cols[i].other.type == "ladder" then
-                --dont block
-                player.climbing = true
-                player.jumping = false
-                print("climbing vertical. player.climbing= " .. tostring(player.climbing) .. " collisions count: " .. #cols)
-            elseif cols[i].other.type == "floor" then
-                floors_collided = floors_collided + 1
-            end
-        end
-        if (player.climbing or floors_collided == 0) then
-            thing.y = thing.y + thing.velocity.y
-        else
-            thing.velocity.y = 0
-        end
-        
+    if math.abs(thing.velocity.y) < 0.1 then --check for tiny floats
+        thing.velocity.y = 0
     end
     if (thing.y+thing.hitbox.yoff+thing.hitbox.height > HEIGHT) then
         thing.y = HEIGHT-thing.h+thing.hitbox.height
@@ -340,8 +333,30 @@ function move_a_thing_bounded(thing)
     elseif ((thing.y+thing.hitbox.yoff < 0) ) then
         thing.y = 0
         thing.velocity.y = 0
+    else
+        local actualX, actualY, cols, len = world:move(thing,(thing.x+thing.hitbox.xoff),(thing.y+thing.velocity.y+thing.hitbox.yoff)) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
+        if not (len > 0) then --check any collision
+            thing.y = thing.y + thing.velocity.y --if none confirm move
+        else
+            local floors_collided = 0
+            local ladders_collided = 0
+            for i=1, len do
+                if cols[i].other.type == LADDER_TERRAIN_TYPE then
+                    --dont block
+                    ladders_collided = ladders_collided + 1
+                elseif cols[i].other.type == FLOOR_TERRAIN_TYPE then
+                    --print("ydir - floor collided x: " .. cols[i].other.x .. " y: ".. cols[i].other.y .. " w: " .. cols[i].other.w .. " h: " .. cols[i].other.h)
+                    --print("ydir - item  x: " .. cols[i].item.x .. " y: ".. cols[i].item.y .. " w: " .. cols[i].item.w .. " h: " .. cols[i].item.h)
+                    --print("ydir - person.climbing=" .. tostring(thing.climbing))
+                    floors_collided = floors_collided + 1
+                end
+            end
+            if(floors_collided > 0) then
+                thing.velocity.y = 0
+            end
+            thing.y = thing.y + thing.velocity.y
+        end
     end
-
 end
 
     
