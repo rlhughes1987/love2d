@@ -57,7 +57,7 @@ function animated_object_factory.constructPlayer(name,x,y, world)
     player.current_spritesheet = (math.random(0,1)==0) and player.spriteSheets.idle_left or player.spriteSheets.idle_right 
 
     player.scale = 1
-    player.leg_power = 4 --jump velocity
+    player.leg_power = 1800 --jump velocity
     player.jumping = false
     player.climbing = false
     player.friction = 7
