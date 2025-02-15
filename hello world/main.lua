@@ -234,7 +234,19 @@ function love.update(dt)
 end
 
 function can_climb(thing)
-    return true
+    local hit_x = thing.x + thing.hitbox.xoff
+    local hit_y = thing.y + thing.hitbox.yoff
+
+    local x = hit_x + (thing.hitbox.width / 2)
+    local y = hit_y + (thing.hitbox.height / 2)
+
+    local function is_ladder(item)
+        return item.type == LADDER_TERRAIN_TYPE
+    end
+
+    local items, len = world:queryPoint(x,y, is_ladder)
+
+    return len > 0
 end
 
 function physics(thing, dt)
