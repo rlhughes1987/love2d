@@ -73,6 +73,11 @@ local lighting = {
 --extend
 }
 
+function lighting.reset()
+    lighting.distance_shading.distance_lights = {}
+    lighting.godray_shading.ray = {}
+end
+
 function lighting.addDistanceLight(light, power, r, g, b) -- pass light object and assign power and colour
     local powered_light = { lightobj = light, power = power, r = r, g = g, b = b}
     table.insert(lighting.distance_shading.distance_lights,powered_light)

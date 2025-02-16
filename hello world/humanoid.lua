@@ -10,7 +10,8 @@ local animations = {
     idle_left = {},
     idle_right = {},
     climbing = {},
-    idle_climbing = {}
+    idle_climbing = {},
+    roll = {}
 }
 
 animations.walking_left.sprite_sheet = love.graphics.newImage('sprites/walk-left.png')
@@ -37,6 +38,9 @@ animations.climbing.animation = anim8.newAnimation(animations.climbing.grid('1-8
 animations.idle_climbing.sprite_sheet = love.graphics.newImage('sprites/idle-climbing.png')
 animations.idle_climbing.grid = anim8.newGrid(96,84,animations.idle_climbing.sprite_sheet:getWidth(), animations.idle_climbing.sprite_sheet:getHeight())
 animations.idle_climbing.animation = anim8.newAnimation(animations.idle_climbing.grid('1-7',1),0.15) --start slow
+animations.roll.sprite_sheet = love.graphics.newImage('sprites/roll.png')
+animations.roll.grid = anim8.newGrid(96,84,animations.roll.sprite_sheet:getWidth(), animations.roll.sprite_sheet:getHeight())
+animations.roll.animation = anim8.newAnimation(animations.roll.grid('1-9',1),0.05)
 
 function humanoid.constructPlayer(name,x,y, world, lighting)
     local player = {}
@@ -116,6 +120,10 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
             else
                 self.current_animation = animations.idle_climbing
             end
+        end
+        --falling
+        if(self.velocity.y > 0 and self.falling) then
+            self.current_animation = animations.roll -- no falling animation with protoype 
         end
         self.current_animation.animation:update(dt * self.animation_rate)
     end

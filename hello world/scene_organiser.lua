@@ -6,29 +6,30 @@ scene_organiser.__index = scene_organiser
 function scene_organiser:create()
     local sg = {}
     setmetatable(sg, scene_organiser)
-
-    --local scene1 = scene:create("rainy cyberpunk street")
-    --local scene2 = scene:create("rainy cyberpunk street")
-    --local scene3 = scene:create("rainy cyberpunk street")
-    --local scene4 = scene:create("rainy cyberpunk street")
     sg.scenes = {
-        scene:create("industrial_area"),
-        scene:create("chasm"),
-        scene:create("pit")
+        scene:create("industrial_area", 30, 220),
+        scene:create("chasm", 416, 0),
+        scene:create("pit", 416, 0)
     }
     sg.current_scene_index = 1
     return sg
 end
 
 function scene_organiser:getScene()
-    print("scene: ".. self.scenes[self.current_scene_index].name.. " at index: ".. self.current_scene_index)
-    return self.scenes[self.current_scene_index]
+    local c_s = self.scenes[self.current_scene_index]
+    return c_s
 end
 
-function scene_organiser:getNextScene()
+function scene_organiser:getNextScene(direction)
 
+    if direction == "base" then
+        --pick a specific scene
+    end
+    --extend for other directions
+
+    -- for now just cycle whatever
     if self.current_scene_index == #self.scenes then -- reset if at end
-        self.current_scene_index = 1
+        --to do: do something
     else
         self.current_scene_index = self.current_scene_index + 1 --otherwise increment
     end
