@@ -6,6 +6,7 @@ local animated_object_factory = {
 
 function animated_object_factory.constructPlayer(name,x,y, world)
     local player = {}
+    player.type = "humanoid"
     player.name = name
     player.init_x = x
     player.init_y = y
@@ -57,10 +58,10 @@ function animated_object_factory.constructPlayer(name,x,y, world)
     player.current_spritesheet = (math.random(0,1)==0) and player.spriteSheets.idle_left or player.spriteSheets.idle_right 
 
     player.scale = 1
-    player.leg_power = 1800 --jump velocity
+    player.leg_power = 300 --jump velocity
     player.jumping = false
     player.climbing = false
-    player.friction = 7
+    player.falling = false
 
     --add to collideable world
     world:add(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
@@ -126,7 +127,7 @@ function animated_object_factory.constructLight(x, y, lighting, type)
     light.flickerdepth = 0.23 --length the light goes off in dt
     light.flicking = false
     if type == "distance" then
-        lighting.addDistanceLight(light, 300, 1.0, 1.0, 1.0)
+        lighting.addDistanceLight(light, 32, 1.0, 1.0, 1.0)
     elseif type == "godray" then
         lighting.addGodRay(light, 0.8, 0.4, 2)
         --decay (~0.5-0.8)

@@ -2,10 +2,11 @@
 function love.load()
     MAX_SPEED = 2000
     MAX_CLIMB_SPEED = 0.8
-    GRAVITY = 200
+    GRAVITY = 500
     FRICTION = 7
     LADDER_TERRAIN_TYPE = "ladder"
     FLOOR_TERRAIN_TYPE = "floor"
+    HUMANOID_TYPE = "humanoid"
     debug_message = ""
     --imports
     anim8 = require 'libraries/anim8'
@@ -67,11 +68,13 @@ function love.load()
 end
 
 function evaluate_player_state(humanoid)
-
-    if(humanoid.velocity.y == 0) then
+    if(humanoid.velocity.y == 0 and humanoid.falling) then
         humanoid.jumping = false
+        humanoid.falling = false
     end
-
+    if(humanoid.velocity.y > 0) then
+        humanoid.falling = true
+    end
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
@@ -93,15 +96,22 @@ function love.update(dt)
     --up or down
     --jump/fall
     if((love.keyboard.isDown("space") and (not player.jumping))) then --if starting a jump or in the middle of a jump
-        player.velocity.y = player.velocity.y - (player.leg_power * dt)
+        player.velocity.y = player.velocity.y - (player.leg_power)
         player.jumping = true
         player.climbing = false
+        player.falling = false
     end
     --climb
     if(love.keyboard.isDown("s") and can_climb(player) and player.velocity.y < MAX_CLIMB_SPEED) then
-        player.velocity.y = player.velocity.y + 1
+        player.velocity.y = player.velocity.y + (MAX_SPEED * dt)
+        player.climbing = true
+        player.falling = false
+        player.jumping = false
     elseif(love.keyboard.isDown("w") and can_climb(player) and player.velocity.y > -MAX_CLIMB_SPEED) then
-        player.velocity.y = player.velocity.y - 1
+        player.velocity.y = player.velocity.y - (MAX_SPEED * dt)
+        player.climbing = true
+        player.jumping = false
+        player.falling = false
     end
     --update velocity based on lack of inputs
     --if not x_key_pressed then
@@ -113,14 +123,16 @@ function love.update(dt)
 
    
 
-    debug_message = "p.v.x =" .. player.velocity.x .. " p.v.y=" .. player.velocity.y .. " p.x " .. player.x .. " p.y " .. "jumping: " .. tostring(player.jumping)
-    move_a_thing_bounded(player, dt)
-     --add gravity and friction
-     if player.climbing then
+    --debug_message = "p.v.x =" .. player.velocity.x .. " p.v.y=" .. player.velocity.y .. " p.x " .. player.x .. " p.y " .. "jumping: " .. tostring(player.jumping)
+    --add gravity and friction
+    if player.climbing then
         ladder_physics(player,dt)
     else
         physics(player,dt)
     end
+    move_a_thing_bounded(player, dt)
+    enforce_boundary(player)
+     
     
     
 
@@ -256,26 +268,27 @@ function can_climb(thing)
     end
 
     local items, len = world:queryPoint(x,y, is_ladder)
-
+    debug_message = "can_climb: " .. tostring(len>0)
     return len > 0
 end
+
+
 
 function physics(thing, dt)
     -- move done outside
     --debug_message = "x= " .. thing.x .. " y=" .. thing.y .. " velocity.x= " .. thing.velocity.x .. " velocity.y=" .. thing.velocity.y .. " -MAX_SPEED=" .. -MAX_SPEED
     thing.velocity.y = thing.velocity.y + GRAVITY * dt
 	thing.velocity.x = thing.velocity.x * (1 - math.min(dt*FRICTION, 1))
+    if(math.abs(thing.velocity.x) < 0.01)
+    then
+        thing.velocity.x = 0
+    end
     -- adjust velocity based on factors
 end
 
 function ladder_physics(thing, dt)
     thing.velocity.y = thing.velocity.y * (1 - math.min(dt*FRICTION, 1))
-	thing.velocity.x = thing.velocity.x * (1 - math.min(dt*FRICTION, 1))
-
-    if(math.abs(thing.velocity.x) < 0.01)
-    then
-        thing.velocity.x = 0
-    end
+	thing.velocity.x = thing.velocity.x * (1 - math.min(dt*FRICTION, 1)) 
 end
 
 
@@ -310,16 +323,13 @@ function direct_a_thing_up(thing, speed)
 end
 
 function move_a_thing_bounded(thing, dt)
-
-    if not world:hasItem(thing) then
-        world:add(thing,thing.x+thing.hitbox.xoff,thing.y+thing.hitbox.yoff, thing.hitbox.width, thing.hitbox.height)
-    end
-
     -- move
     -- lambda so we only check floors for collisions
     local function is_floor(item, other)
         if other.type == FLOOR_TERRAIN_TYPE then
             return "slide"
+        elseif other.type == HUMANOID_TYPE then
+            return "bounce"
         else
             return false
         end
@@ -333,24 +343,52 @@ function move_a_thing_bounded(thing, dt)
     thing.x = actualX - thing.hitbox.xoff
     thing.y = actualY - thing.hitbox.yoff
 
+    local initial_velx = thing.velocity.x
+    local initial_vely = thing.velocity.y
+
     if(actualX ~= target_x and len > 0) then
-        debug_message = "resetting x velocity: diff="
         thing.velocity.x = 0
     end
     if(actualY ~= target_y and len > 0) then
         thing.velocity.y = 0
     end
 
-    --boundary check
-    if((thing.x+thing.velocity.x+thing.hitbox.xoff+thing.hitbox.width) > WIDTH) then --dont touch
-        thing.x = WIDTH - thing.hitbox.xoff - thing.hitbox.width
+    if(len > 0) then
+        for i=1, #cols do
+            if cols[i].other.type == HUMANOID_TYPE then
+                debug_message = "bounce that bitch"
+                --x
+                if cols[i].bounce.x < cols[i].touch.x then
+                    thing.velocity.x = -initial_velx
+                else
+                    thing.velocity.x = initial_velx
+                end
+
+                --y
+                if cols[i].bounce.y < cols[i].touch.y then
+                    thing.velocity.y = -initial_vely
+                else
+                    thing.velocity.y = initial_vely
+                end
+            end
+        end
+    end
+end
+
+function enforce_boundary(thing)
+    local hitbox_x = thing.x + thing.hitbox.xoff
+    local hitbox_y = thing.y + thing.hitbox.yoff
+    local hitbox_width = thing.hitbox.width
+    local hitbox_height = thing.hitbox.height
+    if((hitbox_x+hitbox_width) > WIDTH) then --dont touch
+        thing.x = WIDTH - thing.hitbox.xoff - hitbox_width
         thing.velocity.x = 0
-    elseif((thing.x+thing.velocity.x+thing.hitbox.xoff) < 0) then --dont touch
+    elseif(hitbox_x < 0) then --dont touch
         thing.x = 0 - thing.hitbox.xoff
         thing.velocity.x = 0
     end
-    if (thing.y+thing.hitbox.yoff+thing.hitbox.height > HEIGHT) then
-        thing.y = HEIGHT-thing.h+thing.hitbox.height
+    if (hitbox_y+hitbox_height > HEIGHT) then
+        thing.y = HEIGHT - thing.hitbox.yoff - hitbox_height
         thing.velocity.y = 0
     elseif ((thing.y+thing.hitbox.yoff < 0) ) then
         thing.y = 0
@@ -433,19 +471,16 @@ end
 local ofs = {0, 0}
 
 function love.draw()
-
-
-
     cam:attach()
 
-        --shading
-        lighting.startDistanceShading()
         gameMap:drawLayer(gameMap.layers["Background"])
         
-
-        -- distance light
+        --shading
+        lighting.startDistanceShading()
         
-        gameMap:drawLayer(gameMap.layers["Underbackground"])    
+        
+        gameMap:drawLayer(gameMap.layers["Underbackground"]) 
+        -- distance light   
         hammer_1.animations.turned_on:draw(hammer_1.spriteSheet, hammer_1.x, hammer_1.y, 0)
         hammer_2.animations.turned_on:draw(hammer_2.spriteSheet, hammer_2.x, hammer_2.y, 0)
         hammer_3.animations.turned_on:draw(hammer_3.spriteSheet, hammer_3.x, hammer_3.y, 0)
