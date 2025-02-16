@@ -63,6 +63,19 @@ function animated_object_factory.constructPlayer(name,x,y, world)
     player.climbing = false
     player.falling = false
 
+    --shield is a lightobj
+    player.powers = {}
+    player.powers.shield = {}
+    player.powers.shield.image = love.graphics.newImage('sprites/shield.png')
+    player.powers.shield.enabled = true
+    player.powers.shield.x = player.x
+    player.powers.shield.y = player.y
+
+    player.survival = {}
+    player.survival.recently_damaged = false
+    player.survival.recent_damage_timer = 0.0
+    player.survival.recent_damage_timer_threshold = 0.3 -- duration can be used to hold animations in view
+
     --add to collideable world
     world:add(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
     

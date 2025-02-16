@@ -1,7 +1,7 @@
 -- bring data as game starts
 function love.load()
     MAX_SPEED = 2000
-    MAX_CLIMB_SPEED = 0.8
+    MAX_CLIMB_SPEED = 800
     GRAVITY = 500
     FRICTION = 7
     LADDER_TERRAIN_TYPE = "ladder"
@@ -27,7 +27,11 @@ function love.load()
     --collision world
     world = bump.newWorld(32)
 
+    --
     player = animated_object_factory.constructPlayer("Richard", 30, 220, world)
+    lighting.addDistanceLight(player.powers.shield, 32, 0.8, 0.8, 1)
+    player.powers.shield.enabled = false
+    --
     enemy = animated_object_factory.constructPlayer("Enemy", 300, 524, world)
     enemy2 = animated_object_factory.constructPlayer("Enemy2", 200, 524, world)
     pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
@@ -53,6 +57,7 @@ function love.load()
 
     --lighting
     light_1 = animated_object_factory.constructLight(175,490, lighting, "distance") --not sure need to animate light turning on or off
+    light_1.enabled = true
     light_2 = animated_object_factory.constructLight(0.1,0.1, lighting, "godray")
 
     --scene decoration -- TODO: Make hammers hitboxes dynamic and therefore collideable
@@ -67,7 +72,7 @@ function love.load()
     hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
 end
 
-function evaluate_player_state(humanoid)
+function evaluate_player_state(humanoid, dt)
     if(humanoid.velocity.y == 0 and humanoid.falling) then
         humanoid.jumping = false
         humanoid.falling = false
@@ -75,12 +80,27 @@ function evaluate_player_state(humanoid)
     if(humanoid.velocity.y > 0) then
         humanoid.falling = true
     end
+
+    --to do move: show shield while recently damaged
+    humanoid.powers.shield.x = humanoid.x -- move these
+    humanoid.powers.shield.y = humanoid.y
+    if(player.survival.recently_damaged == true) then
+        player.powers.shield.enabled = true
+        player.survival.recent_damage_timer = player.survival.recent_damage_timer + dt
+        if(player.survival.recent_damage_timer > player.survival.recent_damage_timer_threshold) then
+            player.survival.recently_damaged = false
+            player.survival.recent_damage_timer = 0
+        end
+    else
+        player.powers.shield.enabled = false
+    end
+
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
 function love.update(dt)
 
-    evaluate_player_state(player)
+    evaluate_player_state(player, dt)
 
     -- player movement
     --update velocity based on inputs
@@ -103,12 +123,12 @@ function love.update(dt)
     end
     --climb
     if(love.keyboard.isDown("s") and can_climb(player) and player.velocity.y < MAX_CLIMB_SPEED) then
-        player.velocity.y = player.velocity.y + (MAX_SPEED * dt)
+        player.velocity.y = player.velocity.y + (MAX_CLIMB_SPEED * dt)
         player.climbing = true
         player.falling = false
         player.jumping = false
     elseif(love.keyboard.isDown("w") and can_climb(player) and player.velocity.y > -MAX_CLIMB_SPEED) then
-        player.velocity.y = player.velocity.y - (MAX_SPEED * dt)
+        player.velocity.y = player.velocity.y - (MAX_CLIMB_SPEED * dt)
         player.climbing = true
         player.jumping = false
         player.falling = false
@@ -206,14 +226,14 @@ function love.update(dt)
 
     --toggle lights
     if(love.keyboard.isDown("l") ) then
-        light_1.enabled = true
+        player.powers.shield.enabled = true
     end
     if(love.keyboard.isDown("g")) then
         light_2.enabled = true
     end
     if(love.keyboard.isDown("o") ) then -- off
-        light_1.enabled = false
         light_2.enabled = false
+        player.powers.shield.enabled = false
     end
    
 
@@ -356,19 +376,20 @@ function move_a_thing_bounded(thing, dt)
     if(len > 0) then
         for i=1, #cols do
             if cols[i].other.type == HUMANOID_TYPE then
-                debug_message = "bounce that bitch"
+                debug_message = "bounce that bitch p.v.x=" .. thing.velocity.x .. " recent damage=" .. tostring(player.survival.recently_damaged)
+                thing.survival.recently_damaged = true
                 --x
-                if cols[i].bounce.x < cols[i].touch.x then
-                    thing.velocity.x = -initial_velx
-                else
+                if ((initial_velx > 0) and (cols[i].bounce.x > cols[i].touch.x)) or ((initial_velx < 0) and (cols[i].bounce.x < cols[i].touch.x)) then
                     thing.velocity.x = initial_velx
+                else
+                    thing.velocity.x = -initial_velx
+                    thing.x_dir = -thing.x_dir
                 end
 
-                --y
-                if cols[i].bounce.y < cols[i].touch.y then
-                    thing.velocity.y = -initial_vely
-                else
+                if ((initial_vely < 0) and (cols[i].bounce.y < cols[i].touch.y)) or ((initial_vely > 0) and (cols[i].bounce.y > cols[i].touch.y)) then
                     thing.velocity.y = initial_vely
+                else
+                    thing.velocity.y = -initial_vely
                 end
             end
         end
@@ -486,23 +507,34 @@ function love.draw()
         hammer_3.animations.turned_on:draw(hammer_3.spriteSheet, hammer_3.x, hammer_3.y, 0)
         hammer_4.animations.turned_on:draw(hammer_4.spriteSheet, hammer_4.x, hammer_4.y, 0)
         hammer_5.animations.turned_on:draw(hammer_5.spriteSheet, hammer_5.x, hammer_5.y, 0)
-        lighting.endShading()
-        lighting.startGodrayShading()
+        lighting:endShading()
+        
+        
+
+        --lighting.startGodrayShading()
         light_1.animations.switch:draw(light_1.spriteSheet, light_1.x, light_1.y)
         gameMap:drawLayer(gameMap.layers["Inner 1"])
         gameMap:drawLayer(gameMap.layers["Middle"])
         gameMap:drawLayer(gameMap.layers["Inner 2"])
         
         player.current_animation:draw(player.current_spritesheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
-        love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+        --love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
         enemy.current_animation:draw(enemy.current_spritesheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
         enemy2.current_animation:draw(enemy2.current_spritesheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
         pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
-        love.graphics.rectangle("line", pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
+        --love.graphics.rectangle("line", pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
+        if(player.powers.shield.enabled) then
+            lighting.startDistanceShading()
+            love.graphics.draw(player.powers.shield.image,player.x,player.y)
+            lighting.endShading()
+        end
+
+
+        
        
         gameMap:drawLayer(gameMap.layers["Front"])
-        lighting:endShading()
+        
 
         for i=1, #floors do
             love.graphics.rectangle("line",floors[i].x, floors[i].y, floors[i].w, floors[i].h)
