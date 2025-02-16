@@ -1,5 +1,6 @@
 -- bring data as game starts
 function love.load()
+    --environment variables
     MAX_SPEED = 2000
     MAX_CLIMB_SPEED = 800
     GRAVITY = 500
@@ -8,6 +9,7 @@ function love.load()
     FLOOR_TERRAIN_TYPE = "floor"
     HUMANOID_TYPE = "humanoid"
     debug_message = ""
+
     --imports
     anim8 = require 'libraries/anim8'
     bump = require 'libraries/bump'
@@ -18,34 +20,41 @@ function love.load()
     cam = camera()
     sti = require 'libraries/sti'  -- includes box2d and bump
     gameMap = sti('maps/industrial_area.lua')
-
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
 
+    --game dimensions
     WIDTH = gameMap.width * gameMap.tilewidth
     HEIGHT = gameMap.height * gameMap.tileheight
 
     --collision world
     world = bump.newWorld(32)
 
-    --
-    player = animated_object_factory.constructPlayer("Richard", 30, 220, world)
-    lighting.addDistanceLight(player.powers.shield, 32, 0.8, 0.8, 1)
-    player.powers.shield.enabled = false
-    --
-    enemy = animated_object_factory.constructPlayer("Enemy", 300, 524, world)
-    enemy2 = animated_object_factory.constructPlayer("Enemy2", 200, 524, world)
-    pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
+    -- create player
+    spawn_pool = require './humanoid'
+    player = spawn_pool.constructPlayer("Richard", 30, 220, world, lighting)
+    
 
-    --try build collideables from map properties
+    -- scenes (TO DO: Move below into scene objects)
+    require './scene_organiser'
+    sg = scene_organiser:create()
+
+    -- create enemies
+    enemy = spawn_pool.constructPlayer("Enemy", 300, 524, world, lighting)
+    enemy2 = spawn_pool.constructPlayer("Enemy2", 200, 524, world, lighting)
+
+    -- create collideable objects and/or scene decoration
+    pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
+    --floors from tiled
     floors = {}
     local floor_type = "floor"
     if gameMap.layers["Floors"] then
         for i, obj in pairs(gameMap.layers["Floors"].objects) do
             local some_floor = animated_object_factory.constructAnimatedTerrain(floor_type, obj.x,obj.y,obj.width,obj.height, world)
             table.insert(floors,some_floor)
+            --table.insert(scene_1.floors,some_floor)
         end
     end
-    
+    --ladders from tiled
     ladders = {}
     local ladder_type = "ladder"
     if gameMap.layers["Ladders"] then
@@ -54,13 +63,12 @@ function love.load()
             table.insert(floors,some_floor)
         end
     end
-
-    --lighting
+    --animated physical lights
     light_1 = animated_object_factory.constructLight(175,490, lighting, "distance") --not sure need to animate light turning on or off
-    light_1.enabled = true
+    light_1.enabled = false
     light_2 = animated_object_factory.constructLight(0.1,0.1, lighting, "godray")
 
-    --scene decoration -- TODO: Make hammers hitboxes dynamic and therefore collideable
+    --backgriound hammers -- TODO: Make hammers foreground and hitboxes dynamic and collideable and hurt player
     hammer_1 = animated_object_factory.constructHammer("hammer1",384,512)
     hammer_1.animations.turned_on:gotoFrame(2)
     hammer_2 = animated_object_factory.constructHammer("hammer2",416,512)
@@ -70,6 +78,12 @@ function love.load()
     hammer_4 = animated_object_factory.constructHammer("hammer4",480,512)
     hammer_4.animations.turned_on:gotoFrame(5)
     hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
+end
+
+function love.keypressed(key, scancode, isrepeat)
+    if key == "t" then
+        sg:getNextScene()
+    end
 end
 
 function evaluate_player_state(humanoid, dt)
@@ -82,28 +96,27 @@ function evaluate_player_state(humanoid, dt)
     end
 
     --to do move: show shield while recently damaged
-    humanoid.powers.shield.x = humanoid.x -- move these
-    humanoid.powers.shield.y = humanoid.y
-    if(player.survival.recently_damaged == true) then
-        player.powers.shield.enabled = true
-        player.survival.recent_damage_timer = player.survival.recent_damage_timer + dt
-        if(player.survival.recent_damage_timer > player.survival.recent_damage_timer_threshold) then
-            player.survival.recently_damaged = false
-            player.survival.recent_damage_timer = 0
+    humanoid.powers.shield.x = humanoid.x + humanoid.hitbox.xoff + humanoid.hitbox.width/2
+    humanoid.powers.shield.y = humanoid.y + humanoid.hitbox.yoff + humanoid.hitbox.height/2
+    if(humanoid.survival.recently_damaged == true) then
+        humanoid.powers.shield.enabled = true
+        humanoid.survival.recent_damage_timer = humanoid.survival.recent_damage_timer + dt
+        if(humanoid.survival.recent_damage_timer > humanoid.survival.recent_damage_timer_threshold) then
+            humanoid.survival.recently_damaged = false
+            humanoid.survival.recent_damage_timer = 0
         end
     else
-        player.powers.shield.enabled = false
+        humanoid.powers.shield.enabled = false
     end
 
 end
 
 -- runs every 60 frames, dt delta time between this frame and last
 function love.update(dt)
-
+    -- keep at top in order
     evaluate_player_state(player, dt)
 
-    -- player movement
-    --update velocity based on inputs
+    --inputs
     --right or left direction
     if(love.keyboard.isDown("d")) and (math.abs(player.velocity.x) < MAX_SPEED) then
         player.x_dir = 1
@@ -113,7 +126,6 @@ function love.update(dt)
         player.x_dir = -1
         player.velocity.x = player.velocity.x - (MAX_SPEED * dt)
     end
-    --up or down
     --jump/fall
     if((love.keyboard.isDown("space") and (not player.jumping))) then --if starting a jump or in the middle of a jump
         player.velocity.y = player.velocity.y - (player.leg_power)
@@ -133,84 +145,24 @@ function love.update(dt)
         player.jumping = false
         player.falling = false
     end
-    --update velocity based on lack of inputs
-    --if not x_key_pressed then
-    --    reduce_x_speed(player)
-    --end
-    --if not y_key_pressed then
-    --    reduce_y_speed(player)
-    --end
-
-   
-
-    --debug_message = "p.v.x =" .. player.velocity.x .. " p.v.y=" .. player.velocity.y .. " p.x " .. player.x .. " p.y " .. "jumping: " .. tostring(player.jumping)
+ 
     --add gravity and friction
     if player.climbing then
         ladder_physics(player,dt)
     else
         physics(player,dt)
     end
-    move_a_thing_bounded(player, dt)
-    enforce_boundary(player)
-     
-    
-    
-
+    --move
+    move_a_humanoid_bounded(player, dt)
     --update animations based on velocity
-    --jumping
-    if(player.velocity.y ~= 0 and player.jumping) then
-        if player.x_dir > 0 then
-            player.current_animation = player.animations.jump_right
-            player.current_spritesheet = player.spriteSheets.jump_right
-        elseif player.x_dir < 0 then
-            player.current_animation = player.animations.jump_left
-            player.current_spritesheet = player.spriteSheets.jump_left
-        end
-    end
-    --walking
-    if(player.velocity.y == 0) then
-        if player.x_dir > 0 then
-            player.current_animation = player.animations.walking_right
-            player.current_spritesheet = player.spriteSheets.walking_right
-        elseif player.x_dir < 0 then
-            player.current_animation = player.animations.walking_left
-            player.current_spritesheet = player.spriteSheets.walking_left
-        end
-    end
-    --idle
-    if (player.velocity.x ==0 and player.velocity.y == 0) then
-        if(player.x_dir < 0) then
-            player.current_animation = player.animations.idle_left
-            player.current_spritesheet = player.spriteSheets.idle_left
-        else
-            player.current_animation = player.animations.idle_right
-            player.current_spritesheet = player.spriteSheets.idle_right
-        end
-    end
-    --climbing
-    if (player.climbing) then
-        if (player.velocity.y ~= 0) then
-            player.current_animation = player.animations.climbing
-            player.current_spritesheet = player.spriteSheets.climbing
-        else
-            player.current_animation = player.animations.idle_climbing
-            player.current_spritesheet = player.spriteSheets.idle_climbing
-        end
-    end
-
-    player.current_animation:update(dt)
-
+    player:updateAnimationBasedOnVelocity(dt)
 
     -- TO DO: Generate automatic movement of enemy
-    move_a_thing_bounded(enemy, dt)
-    enemy.current_animation:update(dt)
+    move_a_humanoid_bounded(enemy, dt)
+    enemy.current_animation.animation:update(dt)
 
-    move_a_thing_bounded(enemy2, dt)
-    enemy2.current_animation:update(dt)
-
-
-    
-    
+    move_a_humanoid_bounded(enemy2, dt)
+    enemy2.current_animation.animation:update(dt)
 
     -- Scene animations
     --pipe cloud
@@ -226,7 +178,7 @@ function love.update(dt)
 
     --toggle lights
     if(love.keyboard.isDown("l") ) then
-        player.powers.shield.enabled = true
+        light_1.enabled = true
     end
     if(love.keyboard.isDown("g")) then
         light_2.enabled = true
@@ -257,15 +209,15 @@ function love.update(dt)
     if cam.y < h/2 then
         cam.y = h/2
     end
-    local mapW = gameMap.width * gameMap.tilewidth
-    local mapH = gameMap.height * gameMap.tileheight
+    --local mapW = gameMap.width * gameMap.tilewidth
+    --local mapH = gameMap.height * gameMap.tileheight
     --right edge
-    if cam.x > (mapW - w/2) then
-        cam.x = (mapW - w/2)
+    if cam.x > (WIDTH - w/2) then
+        cam.x = (WIDTH - w/2)
     end
     -- bottom edge
-    if cam.y > (mapH - h/2) then
-        cam.y = (mapH - h/2)
+    if cam.y > (HEIGHT - h/2) then
+        cam.y = (HEIGHT - h/2)
     end
 
     -- collision world
@@ -288,7 +240,6 @@ function can_climb(thing)
     end
 
     local items, len = world:queryPoint(x,y, is_ladder)
-    debug_message = "can_climb: " .. tostring(len>0)
     return len > 0
 end
 
@@ -342,10 +293,10 @@ function direct_a_thing_up(thing, speed)
     thing.velocity.y = -speed
 end
 
-function move_a_thing_bounded(thing, dt)
+function move_a_humanoid_bounded(humanoid, dt)
     -- move
     -- lambda so we only check floors for collisions
-    local function is_floor(item, other)
+    local function collision_control(item, other)
         if other.type == FLOOR_TERRAIN_TYPE then
             return "slide"
         elseif other.type == HUMANOID_TYPE then
@@ -355,45 +306,50 @@ function move_a_thing_bounded(thing, dt)
         end
     end
 
-    local hitbox_x = thing.x + thing.hitbox.xoff
-    local hitbox_y = thing.y + thing.hitbox.yoff
-    local target_x = hitbox_x + thing.velocity.x * dt
-    local target_y = hitbox_y + thing.velocity.y * dt
-    local actualX, actualY, cols, len = world:move(thing,target_x,target_y,is_floor) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
-    thing.x = actualX - thing.hitbox.xoff
-    thing.y = actualY - thing.hitbox.yoff
+    -- test and do movement in collision world
+    local initial_velx = humanoid.velocity.x
+    local initial_vely = humanoid.velocity.y
+    local hitbox_x = humanoid.x + humanoid.hitbox.xoff
+    local hitbox_y = humanoid.y + humanoid.hitbox.yoff
+    local target_x = hitbox_x + humanoid.velocity.x * dt
+    local target_y = hitbox_y + humanoid.velocity.y * dt
+    local actualX, actualY, cols, len = world:move(humanoid,target_x,target_y,collision_control) -- sim move, TO DO: Remove seperate horizontal and vertical collision checks
+    local result_x = actualX - humanoid.hitbox.xoff
+    local result_y = actualY - humanoid.hitbox.yoff
+    humanoid:updateRootPosition(result_x, result_y)
 
-    local initial_velx = thing.velocity.x
-    local initial_vely = thing.velocity.y
-
+    -- adjust velocities based on collision data
+    -- stop on floors
     if(actualX ~= target_x and len > 0) then
-        thing.velocity.x = 0
+        humanoid.velocity.x = 0
     end
     if(actualY ~= target_y and len > 0) then
-        thing.velocity.y = 0
+        humanoid.velocity.y = 0
     end
-
+    -- bounce off humans
     if(len > 0) then
         for i=1, #cols do
             if cols[i].other.type == HUMANOID_TYPE then
-                debug_message = "bounce that bitch p.v.x=" .. thing.velocity.x .. " recent damage=" .. tostring(player.survival.recently_damaged)
-                thing.survival.recently_damaged = true
+                humanoid.survival.recently_damaged = true
                 --x
                 if ((initial_velx > 0) and (cols[i].bounce.x > cols[i].touch.x)) or ((initial_velx < 0) and (cols[i].bounce.x < cols[i].touch.x)) then
-                    thing.velocity.x = initial_velx
+                    humanoid.velocity.x = initial_velx
                 else
-                    thing.velocity.x = -initial_velx
-                    thing.x_dir = -thing.x_dir
+                    humanoid.velocity.x = -initial_velx
+                    humanoid.x_dir = -humanoid.x_dir
                 end
 
                 if ((initial_vely < 0) and (cols[i].bounce.y < cols[i].touch.y)) or ((initial_vely > 0) and (cols[i].bounce.y > cols[i].touch.y)) then
-                    thing.velocity.y = initial_vely
+                    humanoid.velocity.y = initial_vely
                 else
-                    thing.velocity.y = -initial_vely
+                    humanoid.velocity.y = -initial_vely
                 end
             end
         end
     end
+
+    -- check movement hasn't put player off screen
+    enforce_boundary(humanoid)
 end
 
 function enforce_boundary(thing)
@@ -401,20 +357,23 @@ function enforce_boundary(thing)
     local hitbox_y = thing.y + thing.hitbox.yoff
     local hitbox_width = thing.hitbox.width
     local hitbox_height = thing.hitbox.height
+    local result_x = thing.x
+    local result_y = thing.y
     if((hitbox_x+hitbox_width) > WIDTH) then --dont touch
-        thing.x = WIDTH - thing.hitbox.xoff - hitbox_width
+        result_x = WIDTH - thing.hitbox.xoff - hitbox_width
         thing.velocity.x = 0
     elseif(hitbox_x < 0) then --dont touch
-        thing.x = 0 - thing.hitbox.xoff
+        result_x = 0 - thing.hitbox.xoff
         thing.velocity.x = 0
     end
     if (hitbox_y+hitbox_height > HEIGHT) then
-        thing.y = HEIGHT - thing.hitbox.yoff - hitbox_height
+        result_y = HEIGHT - thing.hitbox.yoff - hitbox_height
         thing.velocity.y = 0
-    elseif ((thing.y+thing.hitbox.yoff < 0) ) then
-        thing.y = 0
+    elseif ((thing.y+thing.hitbox.yoff < 0)) then
+        result_y = 0
         thing.velocity.y = 0
     end
+    thing:updateRootPosition(result_x,result_y)
 end
 
     
@@ -502,43 +461,42 @@ function love.draw()
         
         gameMap:drawLayer(gameMap.layers["Underbackground"]) 
         -- distance light   
-        hammer_1.animations.turned_on:draw(hammer_1.spriteSheet, hammer_1.x, hammer_1.y, 0)
-        hammer_2.animations.turned_on:draw(hammer_2.spriteSheet, hammer_2.x, hammer_2.y, 0)
-        hammer_3.animations.turned_on:draw(hammer_3.spriteSheet, hammer_3.x, hammer_3.y, 0)
-        hammer_4.animations.turned_on:draw(hammer_4.spriteSheet, hammer_4.x, hammer_4.y, 0)
-        hammer_5.animations.turned_on:draw(hammer_5.spriteSheet, hammer_5.x, hammer_5.y, 0)
-        lighting:endShading()
-        
-        
+        hammer_1.animations.turned_on:draw(hammer_1.sprite_sheet, hammer_1.x, hammer_1.y, 0)
+        hammer_2.animations.turned_on:draw(hammer_2.sprite_sheet, hammer_2.x, hammer_2.y, 0)
+        hammer_3.animations.turned_on:draw(hammer_3.sprite_sheet, hammer_3.x, hammer_3.y, 0)
+        hammer_4.animations.turned_on:draw(hammer_4.sprite_sheet, hammer_4.x, hammer_4.y, 0)
+        hammer_5.animations.turned_on:draw(hammer_5.sprite_sheet, hammer_5.x, hammer_5.y, 0)
 
-        --lighting.startGodrayShading()
-        light_1.animations.switch:draw(light_1.spriteSheet, light_1.x, light_1.y)
-        gameMap:drawLayer(gameMap.layers["Inner 1"])
+        lighting:endShading()
         gameMap:drawLayer(gameMap.layers["Middle"])
-        gameMap:drawLayer(gameMap.layers["Inner 2"])
+        --lighting.startGodrayShading()
+        light_1.animations.switch:draw(light_1.sprite_sheet, light_1.x, light_1.y)
         
-        player.current_animation:draw(player.current_spritesheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
+        gameMap:drawLayer(gameMap.layers["Inner 1"])
+        gameMap:drawLayer(gameMap.layers["Game"])
+        
+        if(player.powers.shield.enabled) then
+            lighting.startDistanceShading()
+            player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
+            love.graphics.draw(player.powers.shield.image,player.x,player.y + 6)
+            lighting.endShading()
+        else
+            player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
+        end
+        
         --love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
-        enemy.current_animation:draw(enemy.current_spritesheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
-        enemy2.current_animation:draw(enemy2.current_spritesheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
-        pipe_cloud.animations.weak:draw(pipe_cloud.spriteSheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
+        enemy.current_animation.animation:draw(enemy.current_animation.sprite_sheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
+        enemy2.current_animation.animation:draw(enemy2.current_animation.sprite_sheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
+        pipe_cloud.animations.weak:draw(pipe_cloud.sprite_sheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
         --love.graphics.rectangle("line", pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
         if(player.powers.shield.enabled) then
             lighting.startDistanceShading()
-            love.graphics.draw(player.powers.shield.image,player.x,player.y)
+            love.graphics.draw(player.powers.shield.image,player.x,player.y + 6)
             lighting.endShading()
         end
-
-
-        
        
         gameMap:drawLayer(gameMap.layers["Front"])
-        
-
-        for i=1, #floors do
-            love.graphics.rectangle("line",floors[i].x, floors[i].y, floors[i].w, floors[i].h)
-        end
 
     cam:detach()
 
