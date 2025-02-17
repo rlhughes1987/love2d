@@ -25,10 +25,10 @@ animations.walking_right.grid = anim8.newGrid(96,84,animations.walking_right.spr
 animations.walking_right.animation = anim8.newAnimation(animations.walking_right.grid('1-8',1),0.1) --start slow      
 animations.jump_left.sprite_sheet = love.graphics.newImage('sprites/jump-left.png')
 animations.jump_left.grid = anim8.newGrid(96,84,animations.jump_left.sprite_sheet:getWidth(), animations.jump_left.sprite_sheet:getHeight())
-animations.jump_left.animation = anim8.newAnimation(animations.jump_left.grid('1-3',1),0.15) --start slow
+animations.jump_left.animation = anim8.newAnimation(animations.jump_left.grid('1-3',1),0.5) --start slow
 animations.jump_right.sprite_sheet = love.graphics.newImage('sprites/jump-right.png')
 animations.jump_right.grid = anim8.newGrid(96,84,animations.jump_right.sprite_sheet:getWidth(), animations.jump_right.sprite_sheet:getHeight())
-animations.jump_right.animation = anim8.newAnimation(animations.jump_right.grid('1-3',1),0.15) --start slow
+animations.jump_right.animation = anim8.newAnimation(animations.jump_right.grid('1-3',1),0.5) --start slow
 animations.idle_left.sprite_sheet = love.graphics.newImage('sprites/idle-left.png')
 animations.idle_left.grid = anim8.newGrid(96,84,animations.idle_left.sprite_sheet:getWidth(), animations.idle_left.sprite_sheet:getHeight())
 animations.idle_left.animation = anim8.newAnimation(animations.idle_left.grid('1-7',1),0.15) --start slow
@@ -43,10 +43,10 @@ animations.idle_climbing.grid = anim8.newGrid(96,84,animations.idle_climbing.spr
 animations.idle_climbing.animation = anim8.newAnimation(animations.idle_climbing.grid('1-7',1),0.15) --start slow
 animations.roll_left.sprite_sheet = love.graphics.newImage('sprites/roll-left.png')
 animations.roll_left.grid = anim8.newGrid(96,84,animations.roll_left.sprite_sheet:getWidth(), animations.roll_left.sprite_sheet:getHeight())
-animations.roll_left.animation = anim8.newAnimation(animations.roll_left.grid('1-9',1),0.05)
+animations.roll_left.animation = anim8.newAnimation(animations.roll_left.grid('2-9',1),0.1)
 animations.roll_right.sprite_sheet = love.graphics.newImage('sprites/roll-right.png')
 animations.roll_right.grid = anim8.newGrid(96,84,animations.roll_right.sprite_sheet:getWidth(), animations.roll_right.sprite_sheet:getHeight())
-animations.roll_right.animation = anim8.newAnimation(animations.roll_right.grid('1-9',1),0.05)
+animations.roll_right.animation = anim8.newAnimation(animations.roll_right.grid('2-9',1),0.1)
 animations.wall_slide_left.sprite_sheet = love.graphics.newImage('sprites/wall-slide-left.png')
 animations.wall_slide_left.grid = anim8.newGrid(96,84,animations.wall_slide_left.sprite_sheet:getWidth(), animations.wall_slide_left.sprite_sheet:getHeight())
 animations.wall_slide_left.animation = anim8.newAnimation(animations.wall_slide_left.grid('1-6',1),0.05)
@@ -64,7 +64,7 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
     player.y = y
     player.w = 32
     player.h = 32
-    player.hitbox = {xoff=32,yoff=42,width=32,height=42, init_xoff=32, init_yoff=32} --offset from image coord
+    player.hitbox = {xoff=32,yoff=42,width=32,height=42, init_xoff=32, init_yoff=42} --offset from image coord
     player.lastvelocity = {x=1, y=0} --start aimed to right, generally used to store direction character faces based on recent movements
     player.x_dir = 1 -- use to face character
     player.velocity = {x=0,y=0}
@@ -75,6 +75,7 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
     player.jumping = false
     player.climbing = false
     player.falling = false
+    player.sliding = false
 
     player.powers = {}
     player.powers.shield = {}
@@ -109,8 +110,9 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
                 self.current_animation = animations.jump_left
             end
         end
+        debug_message = "v.y: " .. self.velocity.y.." falling: " ..tostring(self.falling).." jumping: "..tostring(self.jumping).." sliding: "..tostring(self.sliding)
         --walking
-        if(self.velocity.y == 0) then
+        if(self.velocity.y == 0 and (not self.falling) and (not self.jumping)) then
             if self.x_dir > 0 then
                 self.current_animation = animations.walking_right
             elseif self.x_dir < 0 then
@@ -133,26 +135,20 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
                 self.current_animation = animations.idle_climbing
             end
         end
-        --falling
+        --falling / sliding
         if(self.velocity.y > 0 and self.falling) then
-            local check = self:check_wall_slide(world)
-            if check == "left" then
-                print("left")
-                self.current_animation = animations.wall_slide_left
-                --self.hitbox.xoff = self.hitbox.init_xoff - 15 --adjust image a bit for slide
-            elseif check == "right" then
-                print("right")
-                self.current_animation = animations.wall_slide_right
-                --self.hitbox.xoff = self.hitbox.init_xoff + 15
-                --adjust image a bit for slide
-            else 
+            if(self.sliding) then -- sliding
+                if(self.x_dir < 0) then
+                    self.current_animation = animations.wall_slide_left -- no falling animation with protoype
+                else
+                    self.current_animation = animations.wall_slide_right
+                end
+            else -- falling
                 if(self.x_dir < 0) then
                     self.current_animation = animations.roll_left -- no falling animation with protoype
                 else
                     self.current_animation = animations.roll_right
                 end
-                --self.hitbox.xoff = self.hitbox.init_xoff
-                --self.hitbox.yoff = self.hitbox.init_yoff
             end
         end
         self.current_animation.animation:update(dt * self.animation_rate)
@@ -167,28 +163,24 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
             local hit_x = self.x + self.hitbox.xoff
             local hit_y = self.y + self.hitbox.yoff
     
-            local x = hit_x - 1
-            local y = hit_y + (self.hitbox.height / 2)
+            local xl = hit_x - 5
+            local yl = hit_y + (self.hitbox.height / 2)
     
             local function is_floor(other)
                 return other.type == FLOOR_TERRAIN_TYPE
             end
     
-            local items, len = world:queryPoint(x,y, is_floor)
+            local items, len = world:queryPoint(xl,yl, is_floor)
             if(len > 0) then
-                
                 return "left"
             end
             --query right
-            hit_x = self.x + self.hitbox.xoff
-            hit_y = self.y + self.hitbox.yoff
     
-            x = hit_x + self.hitbox.width + 1
-            y = hit_y + (self.hitbox.height / 2)
+            local xr = hit_x + self.hitbox.width + 5
+            local yr = hit_y + (self.hitbox.height / 2)
     
-            items, len = world:queryPoint(x,y, is_floor)
+            items, len = world:queryPoint(xr,yr, is_floor)
             if(len > 0) then
-                
                 return "right"
             end
         end

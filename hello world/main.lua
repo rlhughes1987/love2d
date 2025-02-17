@@ -117,10 +117,40 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function evaluate_player_state(humanoid, dt)
+
     if(humanoid.velocity.y == 0 and humanoid.falling) then
         humanoid.jumping = false
         humanoid.falling = false
+        humanoid.sliding = false
     end
+    
+    if(humanoid.falling) then 
+        local check = humanoid:check_wall_slide(world)
+        if check == "left" then
+            print("left")
+            --debug_message = "left"
+            humanoid.x_dir = -1
+            if (not humanoid.sliding) then
+                humanoid.hitbox.xoff = humanoid.hitbox.init_xoff + 5 --once only adjust image a bit for slide
+                humanoid.sliding = true
+            end
+        elseif check == "right" then
+            print("right")
+            --debug_message = "right"
+            humanoid.x_dir = 1
+            if (not humanoid.sliding) then
+                humanoid.hitbox.xoff = humanoid.hitbox.init_xoff - 5 --once only adjust image a bit for slide
+                humanoid.sliding = true
+            end
+        else 
+            print("falling")
+            --debug_message = "falling"
+            humanoid.sliding = false
+            humanoid.hitbox.xoff = humanoid.hitbox.init_xoff
+            humanoid.hitbox.yoff = humanoid.hitbox.init_yoff
+        end
+    end
+
     if(humanoid.velocity.y > 0) then
         humanoid.falling = true
     end
@@ -519,6 +549,7 @@ function love.draw()
             gameMap:drawLayer(gameMap.layers["Inner 1"])
             gameMap:drawLayer(gameMap.layers["Game"])
             
+            love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
             if(player.powers.shield.enabled) then
                 lighting.startDistanceShading()
                 player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
@@ -554,6 +585,7 @@ function love.draw()
             gameMap:drawLayer(gameMap.layers["Background"])
             gameMap:drawLayer(gameMap.layers["Game"])
             lighting.endShading()
+            love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
             if(player.powers.shield.enabled) then
                 lighting.startDistanceShading()
                 player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
