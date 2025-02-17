@@ -95,6 +95,25 @@ function love.keypressed(key, scancode, isrepeat)
     if key == "t" then
         sg:getNextScene()
     end
+
+    if key == "l" then
+        for l=1,#lighting.distance_shading.distance_lights do
+            local current_power = lighting.distance_shading.distance_lights[l].power
+            local new_power = math.max(0,current_power - 50)
+            debug_message = "cp: "..current_power.." np: "..new_power
+            lighting.distance_shading.distance_lights[l].power = new_power
+        end
+    end
+    if key == "o" then
+        for l=1,#lighting.distance_shading.distance_lights do
+            local current_power = lighting.distance_shading.distance_lights[l].power
+            local new_power = math.min(600,current_power + 50)
+            debug_message = "cp: "..current_power.." np: "..new_power
+            lighting.distance_shading.distance_lights[l].power = new_power
+        end
+    end
+
+
 end
 
 function evaluate_player_state(humanoid, dt)
@@ -124,6 +143,7 @@ end
 
 -- runs every 60 frames, dt delta time between this frame and last
 function love.update(dt)
+    --debug_message = "num distance lights: "..(#lighting.distance_shading.distance_lights)
     -- check for scene change
     evaluate_should_change_scene()
 
@@ -148,17 +168,18 @@ function love.update(dt)
         player.falling = false
     end
     --climb
-    if(love.keyboard.isDown("s") and can_climb(player) and player.velocity.y < MAX_CLIMB_SPEED) then
+    if(love.keyboard.isDown("s") and can_climb(player, world) and player.velocity.y < MAX_CLIMB_SPEED) then
         player.velocity.y = player.velocity.y + (MAX_CLIMB_SPEED * dt)
         player.climbing = true
         player.falling = false
         player.jumping = false
-    elseif(love.keyboard.isDown("w") and can_climb(player) and player.velocity.y > -MAX_CLIMB_SPEED) then
+    elseif(love.keyboard.isDown("w") and can_climb(player, world) and player.velocity.y > -MAX_CLIMB_SPEED) then
         player.velocity.y = player.velocity.y - (MAX_CLIMB_SPEED * dt)
         player.climbing = true
         player.jumping = false
         player.falling = false
     end
+
  
     --add gravity and friction
     if player.climbing then
@@ -169,7 +190,7 @@ function love.update(dt)
     --move scene objects
     move_a_humanoid_bounded(player, dt)
     --update animations based on velocity
-    player:updateAnimationBasedOnVelocity(dt)
+    player:updateAnimationBasedOnVelocity(dt, world)
 
     -- TO DO: Generate automatic movement of enemy
     --move_a_humanoid_bounded(enemy, dt)
@@ -191,16 +212,10 @@ function love.update(dt)
     hammer_5.animations.turned_on:update(dt)
 
     --toggle lights
-    if(love.keyboard.isDown("l") ) then
-        light_1.enabled = true
-    end
     if(love.keyboard.isDown("g")) then
         light_2.enabled = true
     end
-    if(love.keyboard.isDown("o") ) then -- off
-        light_2.enabled = false
-        player.powers.shield.enabled = false
-    end
+  
    
 
     --flicker lights
@@ -242,20 +257,9 @@ function love.update(dt)
 
 end
 
-function can_climb(thing)
-    local hit_x = thing.x + thing.hitbox.xoff
-    local hit_y = thing.y + thing.hitbox.yoff
 
-    local x = hit_x + (thing.hitbox.width / 2)
-    local y = hit_y + (thing.hitbox.height / 2)
 
-    local function is_ladder(other)
-        return other.type == LADDER_TERRAIN_TYPE
-    end
 
-    local items, len = world:queryPoint(x,y, is_ladder)
-    return len > 0
-end
 
 
 
@@ -549,6 +553,7 @@ function love.draw()
         cam:attach()
             gameMap:drawLayer(gameMap.layers["Background"])
             gameMap:drawLayer(gameMap.layers["Game"])
+            lighting.endShading()
             if(player.powers.shield.enabled) then
                 lighting.startDistanceShading()
                 player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
@@ -566,9 +571,13 @@ function love.draw()
     -- end scene2
     -- if scene 3
     if(current_scene:getName() == "pit") then
+        lighting.endShading();
+
         cam:attach()
+            lighting.startDistanceShading()
             gameMap:drawLayer(gameMap.layers["Background"])
             gameMap:drawLayer(gameMap.layers["Game"])
+            lighting.endShading()
             gameMap:drawLayer(gameMap.layers["Foreground"])
             gameMap:drawLayer(gameMap.layers["Front"])
             if(player.powers.shield.enabled) then

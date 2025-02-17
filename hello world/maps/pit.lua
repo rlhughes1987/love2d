@@ -9,8 +9,8 @@ return {
   height = 30,
   tilewidth = 32,
   tileheight = 32,
-  nextlayerid = 9,
-  nextobjectid = 6,
+  nextlayerid = 10,
+  nextobjectid = 12,
   properties = {},
   tilesets = {
     {
@@ -845,6 +845,548 @@ return {
       wangsets = {},
       tilecount = 4,
       tiles = {}
+    },
+    {
+      name = "Aggregate",
+      firstgid = 130,
+      class = "",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 0,
+      objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 1,
+        height = 1
+      },
+      properties = {},
+      wangsets = {},
+      tilecount = 81,
+      tiles = {
+        {
+          id = 0,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_01.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 1,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_02.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 2,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_03.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 3,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_04.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 4,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_05.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 5,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_06.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 6,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_07.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 7,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_81.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 8,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_08.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 9,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_09.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 10,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_10.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 11,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_11.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 12,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_12.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 13,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_13.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 14,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_14.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 15,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_15.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 16,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_16.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 17,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_17.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 18,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_18.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 19,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_19.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 20,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_20.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 21,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_21.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 22,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_22.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 23,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_23.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 24,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_24.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 25,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_25.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 26,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_26.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 27,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_27.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 28,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_28.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 29,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_29.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 30,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_30.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 31,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_31.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 32,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_32.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 33,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_33.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 34,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_34.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 35,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_35.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 36,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_36.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 37,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_37.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 38,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_38.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 39,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_39.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 40,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_40.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 41,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_41.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 42,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_42.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 43,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_43.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 44,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_44.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 45,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_45.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 46,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_46.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 47,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_47.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 48,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_48.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 49,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_49.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 50,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_50.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 51,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_51.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 52,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_52.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 53,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_53.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 54,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_54.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 55,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_55.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 56,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_56.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 57,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_57.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 58,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_58.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 59,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_59.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 60,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_60.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 61,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_61.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 62,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_62.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 63,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_63.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 64,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_64.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 65,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_65.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 66,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_66.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 67,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_67.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 68,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_68.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 69,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_69.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 70,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_70.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 71,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_71.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 72,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_72.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 73,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_73.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 74,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_74.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 75,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_75.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 76,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_76.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 77,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_77.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 78,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_78.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 79,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_79.png",
+          width = 32,
+          height = 32
+        },
+        {
+          id = 80,
+          image = "../../../tiled/tilesets/1 Tiles/IndustrialTile_80.png",
+          width = 32,
+          height = 32
+        }
+      }
+    },
+    {
+      name = "lamp-Sheet",
+      firstgid = 211,
+      class = "",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 2,
+      image = "../tiled/tilesets/4 Animated objects/lamp-Sheet.png",
+      imagewidth = 64,
+      imageheight = 32,
+      objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      wangsets = {},
+      tilecount = 2,
+      tiles = {}
     }
   },
   layers = {
@@ -878,24 +1420,118 @@ return {
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+        47, 47, 47, 212, 47, 47, 47, 212, 47, 47, 47, 212, 47, 47, 47, 212, 47, 47, 47, 212, 47, 47, 47, 212, 47, 47, 47, 212, 47, 47,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-        47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
+        169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159, 169, 159,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 105, 47,
         47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47
+      }
+    },
+    {
+      type = "objectgroup",
+      draworder = "topdown",
+      id = 9,
+      name = "WhiteDistanceLights",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      properties = {},
+      objects = {
+        {
+          id = 6,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 96,
+          y = 384,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 7,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 224,
+          y = 384,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 8,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 352,
+          y = 384,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 9,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 480,
+          y = 384,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 10,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 608,
+          y = 384,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 11,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 864,
+          y = 384,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        }
       }
     },
     {

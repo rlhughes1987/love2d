@@ -66,12 +66,20 @@ end
 function scene:generateLightingFromMap(lighting)
     --blue distance lights
     self.lights = {}
-    local light_type = "blue_distance_light"
+    local blue_light_type = "blue_distance_light"
     if gameMap.layers["BlueDistanceLights"] then
         for i,obj in pairs(gameMap.layers["BlueDistanceLights"].objects) do
             local some_light = { enabled = true, x = obj.x+obj.width/2, y = obj.y+obj.height/2}
             table.insert(self.lights,some_light)
             lighting.addDistanceLight(some_light, 300, 0.8, 0.8, 1)
+        end
+    end
+    local white_light_type = "white_distance_light"
+    if gameMap.layers["WhiteDistanceLights"] then
+        for i,obj in pairs(gameMap.layers["WhiteDistanceLights"].objects) do
+            local some_light = { enabled = true, x = obj.x+obj.width/2, y = obj.y+obj.height/2}
+            table.insert(self.lights,some_light)
+            lighting.addDistanceLight(some_light, 200, 1.0, 1.0, 1.0)
         end
     end
 end
