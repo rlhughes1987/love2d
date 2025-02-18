@@ -15,6 +15,6 @@ function love.conf(t)
     -- window title
     t.window.title = "Systopia"
     -- image icon
-    t.window.icon = "icon/icon2.png"
+    t.window.icon = "icon/icon2.jpg"
 
 end

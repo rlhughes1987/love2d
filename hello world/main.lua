@@ -11,6 +11,7 @@ function love.load()
     debug_message = ""
 
     --imports
+    sti = require 'libraries/sti'
     anim8 = require 'libraries/anim8'
     bump = require 'libraries/bump'
     obstacle_factory = require './obstacle_factory'
@@ -18,7 +19,7 @@ function love.load()
     lighting = require './lighting'
     camera = require 'libraries/camera'
     cam = camera()
-    sti = require 'libraries/sti'  -- includes box2d and bump
+    
     --gameMap = sti('maps/industrial_area.lua')
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
 
@@ -50,29 +51,6 @@ function love.load()
 
     -- create collideable objects and/or scene decoration
     pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
-
-
-   
-
-    --floors from tiled
-    --floors = {}
-    --local floor_type = "floor"
-    --if gameMap.layers["Floors"] then
-    --    for i, obj in pairs(gameMap.layers["Floors"].objects) do
-    --        local some_floor = animated_object_factory.constructAnimatedTerrain(floor_type, obj.x,obj.y,obj.width,obj.height, world)
-    --        table.insert(floors,some_floor)
-    --        --table.insert(scene_1.floors,some_floor)
-    --    end
-    --end
-    --ladders from tiled
-    --ladders = {}
-    --local ladder_type = "ladder"
-    --if gameMap.layers["Ladders"] then
-    --    for i,obj in pairs(gameMap.layers["Ladders"].objects) do
-    --        local some_floor = animated_object_factory.constructAnimatedTerrain(ladder_type, obj.x,obj.y,obj.width,obj.height, world)
-    --        table.insert(floors,some_floor)
-    --    end
-    --end
 
     --animated physical lights
     light_1 = animated_object_factory.constructLight(175,490, lighting, "distance") --not sure need to animate light turning on or off
@@ -111,6 +89,9 @@ function love.keypressed(key, scancode, isrepeat)
             debug_message = "cp: "..current_power.." np: "..new_power
             lighting.distance_shading.distance_lights[l].power = new_power
         end
+    end
+    if key == "r" then --reset
+        love.load()
     end
 
 
@@ -198,12 +179,12 @@ function love.update(dt)
         player.falling = false
     end
     --climb
-    if(love.keyboard.isDown("s") and can_climb(player, world) and player.velocity.y < MAX_CLIMB_SPEED) then
+    if(love.keyboard.isDown("s") and player:can_climb(world) and player.velocity.y < MAX_CLIMB_SPEED) then
         player.velocity.y = player.velocity.y + (MAX_CLIMB_SPEED * dt)
         player.climbing = true
         player.falling = false
         player.jumping = false
-    elseif(love.keyboard.isDown("w") and can_climb(player, world) and player.velocity.y > -MAX_CLIMB_SPEED) then
+    elseif(love.keyboard.isDown("w") and player:can_climb(world) and player.velocity.y > -MAX_CLIMB_SPEED) then
         player.velocity.y = player.velocity.y - (MAX_CLIMB_SPEED * dt)
         player.climbing = true
         player.jumping = false
@@ -530,26 +511,26 @@ function love.draw()
         cam:attach()
             gameMap:drawLayer(gameMap.layers["Background"])
             --shading
-            lighting.startDistanceShading()
+            --lighting.startDistanceShading()
             
             
-            gameMap:drawLayer(gameMap.layers["Underbackground"]) 
+            --gameMap:drawLayer(gameMap.layers["Underbackground"]) 
             -- distance light   
-            hammer_1.animations.turned_on:draw(hammer_1.sprite_sheet, hammer_1.x, hammer_1.y, 0)
-            hammer_2.animations.turned_on:draw(hammer_2.sprite_sheet, hammer_2.x, hammer_2.y, 0)
-            hammer_3.animations.turned_on:draw(hammer_3.sprite_sheet, hammer_3.x, hammer_3.y, 0)
-            hammer_4.animations.turned_on:draw(hammer_4.sprite_sheet, hammer_4.x, hammer_4.y, 0)
-            hammer_5.animations.turned_on:draw(hammer_5.sprite_sheet, hammer_5.x, hammer_5.y, 0)
+            --hammer_1.animations.turned_on:draw(hammer_1.sprite_sheet, hammer_1.x, hammer_1.y, 0)
+            --hammer_2.animations.turned_on:draw(hammer_2.sprite_sheet, hammer_2.x, hammer_2.y, 0)
+            --hammer_3.animations.turned_on:draw(hammer_3.sprite_sheet, hammer_3.x, hammer_3.y, 0)
+            --hammer_4.animations.turned_on:draw(hammer_4.sprite_sheet, hammer_4.x, hammer_4.y, 0)
+            --hammer_5.animations.turned_on:draw(hammer_5.sprite_sheet, hammer_5.x, hammer_5.y, 0)
 
-            lighting:endShading()
-            gameMap:drawLayer(gameMap.layers["Middle"])
+            --lighting:endShading()
+            gameMap:drawLayer(gameMap.layers["Game-1"])
             --lighting.startGodrayShading()
-            light_1.animations.switch:draw(light_1.sprite_sheet, light_1.x, light_1.y)
+            --light_1.animations.switch:draw(light_1.sprite_sheet, light_1.x, light_1.y)
             
-            gameMap:drawLayer(gameMap.layers["Inner 1"])
             gameMap:drawLayer(gameMap.layers["Game"])
+            gameMap:drawLayer(gameMap.layers["Game+1"])
             
-            love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+            --love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
             if(player.powers.shield.enabled) then
                 lighting.startDistanceShading()
                 player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
@@ -562,7 +543,7 @@ function love.draw()
             --love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
             enemy.current_animation.animation:draw(enemy.current_animation.sprite_sheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
             enemy2.current_animation.animation:draw(enemy2.current_animation.sprite_sheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
-            pipe_cloud.animations.weak:draw(pipe_cloud.sprite_sheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
+            --pipe_cloud.animations.weak:draw(pipe_cloud.sprite_sheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
             --love.graphics.rectangle("line", pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
             if(player.powers.shield.enabled) then
@@ -571,7 +552,7 @@ function love.draw()
                 lighting.endShading()
             end
         
-            gameMap:drawLayer(gameMap.layers["Front"])
+            gameMap:drawLayer(gameMap.layers["Foreground"])
 
         cam:detach()
 
@@ -603,15 +584,33 @@ function love.draw()
     -- end scene2
     -- if scene 3
     if(current_scene:getName() == "pit") then
-        lighting.endShading();
-
         cam:attach()
-            lighting.startDistanceShading()
             gameMap:drawLayer(gameMap.layers["Background"])
+            gameMap:drawLayer(gameMap.layers["Game-1"])
             gameMap:drawLayer(gameMap.layers["Game"])
-            lighting.endShading()
+            gameMap:drawLayer(gameMap.layers["Game+1"])
             gameMap:drawLayer(gameMap.layers["Foreground"])
-            gameMap:drawLayer(gameMap.layers["Front"])
+            if(player.powers.shield.enabled) then
+                lighting.startDistanceShading()
+                player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
+                love.graphics.draw(player.powers.shield.image,player.x,player.y + 6)
+                lighting.endShading()
+            else
+                player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
+            end
+        cam:detach()
+
+        love.graphics.print("HP: ", 10, 10)
+        love.graphics.print("Debug: " .. debug_message, 10, 30)
+    end
+     -- if scene 3
+    if(current_scene:getName() == "garbage") then
+        cam:attach()
+            gameMap:drawLayer(gameMap.layers["Background"])
+            gameMap:drawLayer(gameMap.layers["Game-1"])
+            gameMap:drawLayer(gameMap.layers["Game"])
+            gameMap:drawLayer(gameMap.layers["Game+1"])
+            gameMap:drawLayer(gameMap.layers["Foreground"])
             if(player.powers.shield.enabled) then
                 lighting.startDistanceShading()
                 player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)

@@ -1,6 +1,8 @@
 scene = {}
 scene.__index = scene
 
+  -- includes box2d and bump
+
 function scene:create(name, entry_x, entry_y)
     local s = {}
     setmetatable(s, scene)
