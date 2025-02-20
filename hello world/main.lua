@@ -14,7 +14,6 @@ function love.load()
     sti = require 'libraries/sti'
     anim8 = require 'libraries/anim8'
     bump = require 'libraries/bump'
-    obstacle_factory = require './obstacle_factory'
     animated_object_factory = require './animated_object_factory'
     lighting = require './lighting'
     camera = require 'libraries/camera'
@@ -46,27 +45,27 @@ function love.load()
     player = spawn_pool.constructPlayer("Richard", current_scene.entry_x, current_scene.entry_y, world, lighting)
 
     -- create enemies
-    enemy = spawn_pool.constructPlayer("Enemy", 300, 524, world, lighting)
-    enemy2 = spawn_pool.constructPlayer("Enemy2", 200, 524, world, lighting)
+    --enemy = spawn_pool.constructPlayer("Enemy", 300, 524, world, lighting)
+    --enemy2 = spawn_pool.constructPlayer("Enemy2", 200, 524, world, lighting)
 
     -- create collideable objects and/or scene decoration
-    pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
+    --pipe_cloud = animated_object_factory.constructCloud("pipe_cloud",752,224, world)
 
     --animated physical lights
-    light_1 = animated_object_factory.constructLight(175,490, lighting, "distance") --not sure need to animate light turning on or off
-    light_1.enabled = true
-    light_2 = animated_object_factory.constructLight(0.1,0.1, lighting, "godray")
+    --light_1 = animated_object_factory.constructLight(175,490, lighting, "distance") --not sure need to animate light turning on or off
+    --light_1.enabled = true
+    --light_2 = animated_object_factory.constructLight(0.1,0.1, lighting, "godray")
 
     --backgriound hammers -- TODO: Make hammers foreground and hitboxes dynamic and collideable and hurt player
-    hammer_1 = animated_object_factory.constructHammer("hammer1",384,512)
-    hammer_1.animations.turned_on:gotoFrame(2)
-    hammer_2 = animated_object_factory.constructHammer("hammer2",416,512)
-    hammer_2.animations.turned_on:gotoFrame(3)
-    hammer_3 = animated_object_factory.constructHammer("hammer3",448,512)
-    hammer_3.animations.turned_on:gotoFrame(4)
-    hammer_4 = animated_object_factory.constructHammer("hammer4",480,512)
-    hammer_4.animations.turned_on:gotoFrame(5)
-    hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
+   -- hammer_1 = animated_object_factory.constructHammer("hammer1",384,512)
+    --hammer_1.animations.turned_on:gotoFrame(2)
+    --hammer_2 = animated_object_factory.constructHammer("hammer2",416,512)
+    --hammer_2.animations.turned_on:gotoFrame(3)
+    --hammer_3 = animated_object_factory.constructHammer("hammer3",448,512)
+    --hammer_3.animations.turned_on:gotoFrame(4)
+    --hammer_4 = animated_object_factory.constructHammer("hammer4",480,512)
+    --hammer_4.animations.turned_on:gotoFrame(5)
+    --hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
 end
 
 function love.keypressed(key, scancode, isrepeat)
@@ -78,7 +77,7 @@ function love.keypressed(key, scancode, isrepeat)
         for l=1,#lighting.distance_shading.distance_lights do
             local current_power = lighting.distance_shading.distance_lights[l].power
             local new_power = math.max(0,current_power - 50)
-            debug_message = "cp: "..current_power.." np: "..new_power
+            
             lighting.distance_shading.distance_lights[l].power = new_power
         end
     end
@@ -86,7 +85,7 @@ function love.keypressed(key, scancode, isrepeat)
         for l=1,#lighting.distance_shading.distance_lights do
             local current_power = lighting.distance_shading.distance_lights[l].power
             local new_power = math.min(600,current_power + 50)
-            debug_message = "cp: "..current_power.." np: "..new_power
+
             lighting.distance_shading.distance_lights[l].power = new_power
         end
     end
@@ -94,21 +93,27 @@ function love.keypressed(key, scancode, isrepeat)
         love.load()
     end
 
+    if key == "c" then
+        current_scene.setFocalPoint(1)
+        cam.move(current_scene.current_focal.x, current_scene.current_focal.y)
+    end
+
 
 end
 
 function evaluate_player_state(humanoid, dt)
-
+    --landed on something, including landing as gravity pulls us while stood on ground
     if(humanoid.velocity.y == 0 and humanoid.falling) then
         humanoid.jumping = false
         humanoid.falling = false
+        print("setting sliding false 1")
         humanoid.sliding = false
     end
     
     if(humanoid.falling) then 
         local check = humanoid:check_wall_slide(world)
         if check == "left" then
-            print("left")
+            --print("left")
             --debug_message = "left"
             humanoid.x_dir = -1
             if (not humanoid.sliding) then
@@ -116,7 +121,7 @@ function evaluate_player_state(humanoid, dt)
                 humanoid.sliding = true
             end
         elseif check == "right" then
-            print("right")
+            --print("right")
             --debug_message = "right"
             humanoid.x_dir = 1
             if (not humanoid.sliding) then
@@ -124,8 +129,9 @@ function evaluate_player_state(humanoid, dt)
                 humanoid.sliding = true
             end
         else 
-            print("falling")
+            --print("falling")
             --debug_message = "falling"
+            print("setting sliding false 2")
             humanoid.sliding = false
             humanoid.hitbox.xoff = humanoid.hitbox.init_xoff
             humanoid.hitbox.yoff = humanoid.hitbox.init_yoff
@@ -198,6 +204,7 @@ function love.update(dt)
     else
         physics(player,dt)
     end
+    
     --move scene objects
     move_a_humanoid_bounded(player, dt)
     --update animations based on velocity
@@ -205,38 +212,38 @@ function love.update(dt)
 
     -- TO DO: Generate automatic movement of enemy
     --move_a_humanoid_bounded(enemy, dt)
-    enemy.current_animation.animation:update(dt)
+    --enemy.current_animation.animation:update(dt)
 
     --move_a_humanoid_bounded(enemy2, dt)
-    enemy2.current_animation.animation:update(dt)
+    --enemy2.current_animation.animation:update(dt)
 
     -- Scene animations
     --pipe cloud
-    direct_a_thing_up(pipe_cloud,1)
-    move_a_thing_bounded_reset(pipe_cloud)
-    pipe_cloud.animations.weak:update(dt)
+    --direct_a_thing_up(pipe_cloud,1)
+    --move_a_thing_bounded_reset(pipe_cloud)
+    --pipe_cloud.animations.weak:update(dt)
 
-    hammer_1.animations.turned_on:update(dt)
-    hammer_2.animations.turned_on:update(dt)
-    hammer_3.animations.turned_on:update(dt)
-    hammer_4.animations.turned_on:update(dt)
-    hammer_5.animations.turned_on:update(dt)
+    --hammer_1.animations.turned_on:update(dt)
+    --hammer_2.animations.turned_on:update(dt)
+    --hammer_3.animations.turned_on:update(dt)
+    --hammer_4.animations.turned_on:update(dt)
+    --hammer_5.animations.turned_on:update(dt)
 
     --toggle lights
-    if(love.keyboard.isDown("g")) then
-        light_2.enabled = true
-    end
+    --if(love.keyboard.isDown("g")) then
+    --    light_2.enabled = true
+    --end
   
    
 
     --flicker lights
-    evaluate_flicker(light_1, dt)
+    --evaluate_flicker(light_1, dt)
     --check lights on or off
-    if(light_1.enabled == true) then
-        light_1.animations.switch:gotoFrame(2)
-    else
-        light_1.animations.switch:gotoFrame(1)
-    end
+    --if(light_1.enabled == true) then
+    --    light_1.animations.switch:gotoFrame(2)
+    --else
+    --    light_1.animations.switch:gotoFrame(1)
+    --end
 
     cam:lookAt(player.x, player.y)
     local w = love.graphics.getWidth()
@@ -420,15 +427,14 @@ function evaluate_should_change_scene()
         gameMap = current_scene.map
         SCENE_WIDTH = gameMap.width * gameMap.tilewidth
         SCENE_HEIGHT = gameMap.height * gameMap.tileheight
-        player:updateRootPosition(current_scene.entry_x,current_scene.entry_y)
+        
         --reset collideable world
-        world = bump.newWorld(32)
-        current_scene:generateCollideablesFromMap(world)
+        current_scene:load(world,lighting, player)
+        --current_scene:generateCollideablesFromMap(world)
         --reset lighting
-        lighting.reset()
-        current_scene:generateLightingFromMap(lighting)
+        --current_scene:generateLightingFromMap(lighting)
         --add player
-        world:add(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+        
     end
 end
 
@@ -530,7 +536,7 @@ function love.draw()
             gameMap:drawLayer(gameMap.layers["Game"])
             gameMap:drawLayer(gameMap.layers["Game+1"])
             
-            --love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+            love.graphics.rectangle("line",player.x+player.hitbox.xoff-5, player.y+player.hitbox.yoff, player.hitbox.width+5, player.hitbox.height)
             if(player.powers.shield.enabled) then
                 lighting.startDistanceShading()
                 player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
@@ -541,8 +547,8 @@ function love.draw()
             end
             
             --love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
-            enemy.current_animation.animation:draw(enemy.current_animation.sprite_sheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
-            enemy2.current_animation.animation:draw(enemy2.current_animation.sprite_sheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
+            --enemy.current_animation.animation:draw(enemy.current_animation.sprite_sheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
+            --enemy2.current_animation.animation:draw(enemy2.current_animation.sprite_sheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
             --pipe_cloud.animations.weak:draw(pipe_cloud.sprite_sheet, pipe_cloud.x, pipe_cloud.y, 0.1, 1, 1, 0, 0)
             --love.graphics.rectangle("line", pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 

@@ -1,8 +1,6 @@
 scene = {}
 scene.__index = scene
 
-  -- includes box2d and bump
-
 function scene:create(name, entry_x, entry_y)
     local s = {}
     setmetatable(s, scene)
@@ -13,6 +11,8 @@ function scene:create(name, entry_x, entry_y)
     s.floors = {}
     s.ladders = {}
     s.lights = {}
+    s.focal_points = {}
+    s.current_focal_point = {entry_x, entry_y}
     local map_path = 'maps/'..name..'.lua'
     print(map_path)
     s.map = sti(map_path)
@@ -43,6 +43,27 @@ function scene:getEntryY()
     return self.entry_y
 end
 
+function scene:load(world, lighting, player)
+    player:updateRootPosition(self.entry_x,self.entry_y)
+    --reset collision world
+    world = bump.newWorld(32)
+    -- put player in scene
+    self:generateCollideablesFromMap(world)
+    -- add collideables
+    -- reset and add lighting
+    lighting.reset()
+    self:generateLightingFromMap(lighting)
+    world:add(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+    -- update focal points for camera
+    self:generateFocalPointsFromMap()
+end
+
+function scene:setFocalPoint(index)
+    if index <= #self.focal_points then
+        self.current_focal_point = self.focal_points[index]
+    end
+end
+
 function scene:generateCollideablesFromMap(world)
     local obj_factory = require './animated_object_factory'
     --floors from tiled
@@ -57,8 +78,8 @@ function scene:generateCollideablesFromMap(world)
     --ladders from tiled
     self.ladders = {}
     local ladder_type = "ladder"
-    if gameMap.layers["Ladders"] then
-        for i,obj in pairs(gameMap.layers["Ladders"].objects) do
+    if self.map.layers["Ladders"] then
+        for i,obj in pairs(self.map.layers["Ladders"].objects) do
             local some_floor = obj_factory.constructAnimatedTerrain(ladder_type, obj.x,obj.y,obj.width,obj.height, world)
             table.insert(self.ladders,some_floor)
         end
@@ -69,19 +90,31 @@ function scene:generateLightingFromMap(lighting)
     --blue distance lights
     self.lights = {}
     local blue_light_type = "blue_distance_light"
-    if gameMap.layers["BlueDistanceLights"] then
-        for i,obj in pairs(gameMap.layers["BlueDistanceLights"].objects) do
+    if self.map.layers["BlueDistanceLights"] then
+        for i,obj in pairs(self.map.layers["BlueDistanceLights"].objects) do
             local some_light = { enabled = true, x = obj.x+obj.width/2, y = obj.y+obj.height/2}
             table.insert(self.lights,some_light)
             lighting.addDistanceLight(some_light, 300, 0.8, 0.8, 1)
         end
     end
     local white_light_type = "white_distance_light"
-    if gameMap.layers["WhiteDistanceLights"] then
-        for i,obj in pairs(gameMap.layers["WhiteDistanceLights"].objects) do
+    if self.map.layers["WhiteDistanceLights"] then
+        for i,obj in pairs(self.map.layers["WhiteDistanceLights"].objects) do
             local some_light = { enabled = true, x = obj.x+obj.width/2, y = obj.y+obj.height/2}
             table.insert(self.lights,some_light)
             lighting.addDistanceLight(some_light, 200, 1.0, 1.0, 1.0)
+        end
+    end
+end
+
+function scene:generateFocalPointsFromMap() -- for camera to move to at start of scene
+    --blue distance lights
+    self.focal_points = {}
+    local focal_type = "Boss"
+    if self.map.layers["FocalPoints"] then
+        for i,obj in pairs(self.map.layers["FocalPoints"].objects) do
+            local some_focal_point = { x = obj.x+obj.width/2, y = obj.y+obj.height/2}
+            table.insert(self.focal_points,some_focal_point)
         end
     end
 end

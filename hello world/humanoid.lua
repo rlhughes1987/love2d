@@ -108,7 +108,7 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
                 self.current_animation = animations.jump_left
             end
         end
-        debug_message = "v.y: " .. self.velocity.y.." falling: " ..tostring(self.falling).." jumping: "..tostring(self.jumping).." sliding: "..tostring(self.sliding)
+        debug_message = "hitbox.x: " .. self.hitbox.xoff + self.x.." falling: " ..tostring(self.falling).." jumping: "..tostring(self.jumping).." sliding: "..tostring(self.sliding)
         --walking
         if(self.velocity.y == 0 and (not self.falling) and (not self.jumping)) then
             if self.x_dir > 0 then
@@ -135,6 +135,7 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
         end
         --falling / sliding
         if(self.velocity.y > 0 and self.falling) then
+            print("sliding: "..tostring(self.sliding))
             if(self.sliding) then -- sliding
                 if(self.x_dir < 0) then
                     self.current_animation = animations.wall_slide_left -- no falling animation with protoype
@@ -153,17 +154,21 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
     end
 
     function player:check_wall_slide(world)
-        if(self.velocity.y > 50) then
+        if(self.velocity.y > 0) then
             local function is_floor(other)
                 return other.type == FLOOR_TERRAIN_TYPE
             end
             --query left
             local hit_x = self.x + self.hitbox.xoff
             local hit_y = self.y + self.hitbox.yoff
-    
-            local xl = hit_x - 5
+            local check_distance = 5
+            if(player.sliding) then
+                check_distance = check_distance * 2 --only necessary because hitbox moves when sliding
+            end
+            local xl = hit_x - check_distance
             local yl = hit_y + (self.hitbox.height / 2)
-    
+            print("checking xl:"..xl.." yl:"..yl)
+
             local function is_floor(other)
                 return other.type == FLOOR_TERRAIN_TYPE
             end
@@ -173,11 +178,12 @@ function humanoid.constructPlayer(name,x,y, world, lighting)
                 return "left"
             end
             --query right
-            local xr = hit_x + self.hitbox.width + 5
+            local xr = hit_x + self.hitbox.width + check_distance
             local yr = hit_y + (self.hitbox.height / 2)
+            print("checking xr:"..xr.." yr:"..yr)
     
-            items, len = world:queryPoint(xr,yr, is_floor)
-            if(len > 0) then
+            local itemsr, lenr = world:queryPoint(xr,yr, is_floor)
+            if(lenr > 0) then
                 return "right"
             end
         end
