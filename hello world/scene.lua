@@ -43,7 +43,7 @@ function scene:getEntryY()
     return self.entry_y
 end
 
-function scene:load(world, lighting, player)
+function scene:load()
     player:updateRootPosition(self.entry_x,self.entry_y)
     --reset collision world
     world = bump.newWorld(32)

@@ -31,18 +31,27 @@ function love.load()
     current_scene = sg:getScene()
     gameMap = current_scene.map
     requested_next_scene = nil -- if not nil then we should start drawing next scene and updating world objects (in love.update)
+    -- create player
+    require './humanoid'
+    --player = spawn_pool.constructPlayer("Richard", current_scene.entry_x, current_scene.entry_y, world, lighting)
+    player = humanoid:create("Dicky",0, 0, 32, 42, 32, 42)
+    player:load()
+
+    current_scene:load()
+    --player = spawn_pool:create(player.hitbox = {xoff=32,yoff=42,width=32,height=42, init_xoff=32, init_yoff=42} )
+    
+    
     -- get collideables from scene map
-    current_scene:generateCollideablesFromMap(world)
+    --current_scene:generateCollideablesFromMap(world)
     -- get lighting from scene map
-    current_scene:generateLightingFromMap(lighting)
+    --current_scene:generateLightingFromMap(lighting)
 
     --game dimensions
     SCENE_WIDTH = current_scene:getWidth()
     SCENE_HEIGHT = current_scene:getHeight()
 
-    -- create player
-    spawn_pool = require './humanoid'
-    player = spawn_pool.constructPlayer("Richard", current_scene.entry_x, current_scene.entry_y, world, lighting)
+    
+    
 
     -- create enemies
     --enemy = spawn_pool.constructPlayer("Enemy", 300, 524, world, lighting)
@@ -518,8 +527,6 @@ function love.draw()
             gameMap:drawLayer(gameMap.layers["Background"])
             --shading
             --lighting.startDistanceShading()
-            
-            
             --gameMap:drawLayer(gameMap.layers["Underbackground"]) 
             -- distance light   
             --hammer_1.animations.turned_on:draw(hammer_1.sprite_sheet, hammer_1.x, hammer_1.y, 0)
@@ -527,7 +534,6 @@ function love.draw()
             --hammer_3.animations.turned_on:draw(hammer_3.sprite_sheet, hammer_3.x, hammer_3.y, 0)
             --hammer_4.animations.turned_on:draw(hammer_4.sprite_sheet, hammer_4.x, hammer_4.y, 0)
             --hammer_5.animations.turned_on:draw(hammer_5.sprite_sheet, hammer_5.x, hammer_5.y, 0)
-
             --lighting:endShading()
             gameMap:drawLayer(gameMap.layers["Game-1"])
             --lighting.startGodrayShading()
