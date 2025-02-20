@@ -11,8 +11,8 @@ function scene:create(name, entry_x, entry_y)
     s.floors = {}
     s.ladders = {}
     s.lights = {}
-    s.focal_points = {}
-    s.current_focal_point = {entry_x, entry_y}
+    s.focal_points = { { x=entry_x, y=entry_y } }
+    s.current_focal_point = nil
     local map_path = 'maps/'..name..'.lua'
     print(map_path)
     s.map = sti(map_path)
@@ -44,6 +44,9 @@ function scene:getEntryY()
 end
 
 function scene:load()
+    --current_focal_point
+    self.current_focal_point = self.focal_points[1]
+
     player:updateRootPosition(self.entry_x,self.entry_y)
     --reset collision world
     world = bump.newWorld(32)
@@ -59,8 +62,10 @@ function scene:load()
 end
 
 function scene:setFocalPoint(index)
-    if index <= #self.focal_points then
-        self.current_focal_point = self.focal_points[index]
+    for i=1,#self.focal_points do
+        if i == index then
+            self.current_focal_point = self.focal_points[index]
+        end
     end
 end
 

@@ -438,7 +438,7 @@ function evaluate_should_change_scene()
         SCENE_HEIGHT = gameMap.height * gameMap.tileheight
         
         --reset collideable world
-        current_scene:load(world,lighting, player)
+        current_scene:load()
         --current_scene:generateCollideablesFromMap(world)
         --reset lighting
         --current_scene:generateLightingFromMap(lighting)
