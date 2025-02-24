@@ -19,6 +19,8 @@ function love.load()
     camera = require 'libraries/camera'
     cam = camera()
     
+
+
     --gameMap = sti('maps/industrial_area.lua')
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
 
@@ -36,6 +38,9 @@ function love.load()
     --player = spawn_pool.constructPlayer("Richard", current_scene.entry_x, current_scene.entry_y, world, lighting)
     player = humanoid:create("Dicky",0, 0, 32, 42, 32, 42)
     player:load()
+
+    require './mycamera'
+    mc = mycamera:create(cam, player.x, player.y, player.x, player.y, "smooth", 150)
 
     current_scene:load()
     --player = spawn_pool:create(player.hitbox = {xoff=32,yoff=42,width=32,height=42, init_xoff=32, init_yoff=42} )
@@ -103,11 +108,18 @@ function love.keypressed(key, scancode, isrepeat)
     end
 
     if key == "c" then
-        current_scene.setFocalPoint(1)
-        cam.move(current_scene.current_focal.x, current_scene.current_focal.y)
+        current_scene:setFocalPoint(1)
+        --cam.move(current_scene.current_focal.x, current_scene.current_focal.y)
+        for i=1, #current_scene.focal_points do
+            local focx = current_scene.focal_points[i].x
+            local focy = current_scene.focal_points[i].y
+            local w = love.graphics.getWidth()
+            local h = love.graphics.getHeight()
+            print("focus: "..focx.." "..focy)
+            mc.target.x = focx - w/2
+            mc.target.y = focy - h/2
+        end
     end
-
-
 end
 
 function evaluate_player_state(humanoid, dt)
@@ -115,7 +127,7 @@ function evaluate_player_state(humanoid, dt)
     if(humanoid.velocity.y == 0 and humanoid.falling) then
         humanoid.jumping = false
         humanoid.falling = false
-        print("setting sliding false 1")
+        --print("setting sliding false 1")
         humanoid.sliding = false
     end
     
@@ -140,7 +152,7 @@ function evaluate_player_state(humanoid, dt)
         else 
             --print("falling")
             --debug_message = "falling"
-            print("setting sliding false 2")
+            --print("setting sliding false 2")
             humanoid.sliding = false
             humanoid.hitbox.xoff = humanoid.hitbox.init_xoff
             humanoid.hitbox.yoff = humanoid.hitbox.init_yoff
@@ -242,39 +254,9 @@ function love.update(dt)
     --if(love.keyboard.isDown("g")) then
     --    light_2.enabled = true
     --end
-  
-   
-
-    --flicker lights
-    --evaluate_flicker(light_1, dt)
-    --check lights on or off
-    --if(light_1.enabled == true) then
-    --    light_1.animations.switch:gotoFrame(2)
-    --else
-    --    light_1.animations.switch:gotoFrame(1)
-    --end
-
-    cam:lookAt(player.x, player.y)
-    local w = love.graphics.getWidth()
-    local h = love.graphics.getHeight()
-    --bound camera to left scene edge
-    if cam.x < w/2 then
-        cam.x = w/2
-    end
-    --top edge
-    if cam.y < h/2 then
-        cam.y = h/2
-    end
-    --local mapW = gameMap.width * gameMap.tilewidth
-    --local mapH = gameMap.height * gameMap.tileheight
-    --right edge
-    if cam.x > (SCENE_WIDTH - w/2) then
-        cam.x = (SCENE_WIDTH - w/2)
-    end
-    -- bottom edge
-    if cam.y > (SCENE_HEIGHT - h/2) then
-        cam.y = (SCENE_HEIGHT - h/2)
-    end
+    
+    --mc:updateCameraFollowingPlayer()
+    mc:updateTween(dt)
 
     -- collision world
     world:update(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
@@ -284,6 +266,18 @@ function love.update(dt)
 
 end
 
+
+
+function flickerLights()
+ --flicker lights
+    --evaluate_flicker(light_1, dt)
+    --check lights on or off
+    --if(light_1.enabled == true) then
+    --    light_1.animations.switch:gotoFrame(2)
+    --else
+    --    light_1.animations.switch:gotoFrame(1)
+    --end
+end
 
 
 

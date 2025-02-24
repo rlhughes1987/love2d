@@ -140,7 +140,7 @@ function humanoid:updateAnimationBasedOnVelocity(dt, world)
     end
     --falling / sliding
     if(self.velocity.y > 0 and self.falling) then
-        print("sliding: "..tostring(self.sliding))
+        --print("sliding: "..tostring(self.sliding))
         if(self.sliding) then -- sliding
             if(self.x_dir < 0) then
                 self.current_animation = self.animations.wall_slide_left -- no falling animation with protoype
@@ -172,7 +172,7 @@ function humanoid:check_wall_slide(world)
         end
         local xl = hit_x - check_distance
         local yl = hit_y + (self.hitbox.height / 2)
-        print("checking xl:"..xl.." yl:"..yl)
+        --print("checking xl:"..xl.." yl:"..yl)
 
         local function is_floor(other)
             return other.type == FLOOR_TERRAIN_TYPE
@@ -185,7 +185,7 @@ function humanoid:check_wall_slide(world)
         --query right
         local xr = hit_x + self.hitbox.width + check_distance
         local yr = hit_y + (self.hitbox.height / 2)
-        print("checking xr:"..xr.." yr:"..yr)
+        --print("checking xr:"..xr.." yr:"..yr)
 
         local itemsr, lenr = world:queryPoint(xr,yr, is_floor)
         if(lenr > 0) then
