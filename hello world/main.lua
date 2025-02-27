@@ -20,7 +20,6 @@ function love.load()
     cam = camera()
     
 
-
     --gameMap = sti('maps/industrial_area.lua')
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
 
@@ -33,14 +32,15 @@ function love.load()
     current_scene = sg:getScene()
     gameMap = current_scene.map
     requested_next_scene = nil -- if not nil then we should start drawing next scene and updating world objects (in love.update)
+    
     -- create player
     require './humanoid'
     --player = spawn_pool.constructPlayer("Richard", current_scene.entry_x, current_scene.entry_y, world, lighting)
     player = humanoid:create("Dicky",0, 0, 32, 42, 32, 42)
     player:load()
 
-    require './mycamera'
-    mc = mycamera:create(cam, player.x, player.y, player.x, player.y, "smooth", 150)
+    require './cameraman'
+    mc = cameraman:create(cam, player.x, player.y, player.x, player.y, "smooth", 150)
 
     current_scene:load()
     --player = spawn_pool:create(player.hitbox = {xoff=32,yoff=42,width=32,height=42, init_xoff=32, init_yoff=42} )
