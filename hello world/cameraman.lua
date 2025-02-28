@@ -21,7 +21,7 @@ end
 
 function cameraman:updateCameraFollowingPlayer()
     self.cam:lookAt(player.x, player.y)
-    print("follow player lookat : x:"..self.cam.x.." y:"..self.cam.y)
+    --print("follow player lookat : x:"..self.cam.x.." y:"..self.cam.y)
     local w = love.graphics.getWidth()
     local h = love.graphics.getHeight()
     --bound camera to left scene edge
@@ -79,5 +79,5 @@ function cameraman:updateTween(dt)
         self.cam.y = self.cam.y + self.velocity.y * dt * self.speed
     end
     self.cam:lookAt(self.cam.x, self.cam.y)
-    print(" update tween lookat : x:"..self.cam.x.." y:"..self.cam.y.. " vel.x:"..self.velocity.x.." vel.y:"..self.velocity.y)
+    --print(" update tween lookat : x:"..self.cam.x.." y:"..self.cam.y.. " vel.x:"..self.velocity.x.." vel.y:"..self.velocity.y)
 end

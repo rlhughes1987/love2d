@@ -11,7 +11,8 @@ function scene:create(name, entry_x, entry_y)
     s.floors = {}
     s.ladders = {}
     s.lights = {}
-    s.focal_points = { { x=entry_x, y=entry_y } }
+    s.focal_points = {}
+    s.trigger_zones = {}
     s.current_focal_point = nil
     local map_path = 'maps/'..name..'.lua'
     print(map_path)
@@ -115,11 +116,21 @@ end
 function scene:generateFocalPointsFromMap() -- for camera to move to at start of scene
     --blue distance lights
     self.focal_points = {}
-    local focal_type = "Boss"
     if self.map.layers["FocalPoints"] then
         for i,obj in pairs(self.map.layers["FocalPoints"].objects) do
             local some_focal_point = { x = obj.x+obj.width/2, y = obj.y+obj.height/2}
             table.insert(self.focal_points,some_focal_point)
+        end
+    end
+end
+
+function scene:generateTriggerZonesFromMap()
+    --blue distance lights
+    self.focal_points = {}
+    if self.map.layers["TriggerZones"] then
+        for i,obj in pairs(self.map.layers["TriggerZones"].objects) do
+            local some_trigger_zone = { x = obj.x+obj.width/2, y = obj.y+obj.height/2}
+            table.insert(self.trigger_zones,some_trigger_zone)
         end
     end
 end

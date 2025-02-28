@@ -1,6 +1,7 @@
 -- bring data as game starts
 function love.load()
     --environment variables
+    PAUSED = false
     MAX_SPEED = 2000
     MAX_CLIMB_SPEED = 800
     GRAVITY = 500
@@ -31,7 +32,7 @@ function love.load()
     sg = scene_organiser:create()
     current_scene = sg:getScene()
     gameMap = current_scene.map
-    requested_next_scene = nil -- if not nil then we should start drawing next scene and updating world objects (in love.update)
+    candidate_scene = nil -- if not nil then we should start drawing next scene and updating world objects (in love.update)
     
     -- create player
     require './humanoid'
@@ -120,6 +121,14 @@ function love.keypressed(key, scancode, isrepeat)
             mc.target.y = focy - h/2
         end
     end
+
+    if key == "p" then
+        toggle_pause()
+    end
+end
+
+function toggle_pause()
+    PAUSED = not PAUSED
 end
 
 function evaluate_player_state(humanoid, dt)
@@ -181,6 +190,9 @@ end
 
 -- runs every 60 frames, dt delta time between this frame and last
 function love.update(dt)
+
+    if PAUSED then return end
+
     --debug_message = "num distance lights: "..(#lighting.distance_shading.distance_lights)
     -- check for scene change
     evaluate_should_change_scene()
@@ -255,10 +267,10 @@ function love.update(dt)
     --    light_2.enabled = true
     --end
     
-    --mc:updateCameraFollowingPlayer()
-    mc:updateTween(dt)
+    mc:updateCameraFollowingPlayer()
+    --mc:updateTween(dt)
 
-    -- collision world
+    -- collision world¬
     world:update(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
     --world:update(enemy, enemy.x+enemy.hitbox.xoff, enemy.y+enemy.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
     --world:update(enemy2, enemy2.x+enemy2.hitbox.xoff, enemy2.y+enemy2.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
@@ -408,8 +420,8 @@ function enforce_boundary(thing)
         thing.velocity.x = 0
     end
     if (hitbox_y+hitbox_height > SCENE_HEIGHT) then -- base boundary
-        requested_next_scene = sg:getNextScene("base")
-        if(requested_next_scene == nil) then
+        candidate_scene = sg:getNextScene("base")
+        if(candidate_scene == nil) then
             result_y = SCENE_HEIGHT - thing.hitbox.yoff - hitbox_height
             thing.velocity.y = 0
         end
@@ -421,12 +433,10 @@ function enforce_boundary(thing)
 end
 
 function evaluate_should_change_scene()
-    if requested_next_scene == nil then -- if not nil then we should start drawing next scene and updating world objects (in love.update)
-        return
-    else
+    if candidate_scene ~= nil then -- if not nil then we should start drawing next scene and updating world objects (in love.update)
         --globals
-        current_scene = requested_next_scene
-        requested_next_scene = nil
+        current_scene = candidate_scene
+        candidate_scene = nil
         gameMap = current_scene.map
         SCENE_WIDTH = gameMap.width * gameMap.tilewidth
         SCENE_HEIGHT = gameMap.height * gameMap.tileheight
@@ -514,6 +524,19 @@ end
 local ofs = {0, 0}
 
 function love.draw()
+
+    if PAUSED then
+        local paused_message = "PAUSED"
+        
+
+        local font       = love.graphics.getFont()
+	    local textWidth  = font:getWidth(paused_message)
+	    local textHeight = font:getHeight()
+
+	    love.graphics.print(paused_message, (love.graphics.getWidth()/2), (love.graphics.getHeight()/2), 0, 1, 1, textWidth/2, textHeight/2)
+        return
+    end
+
     -- when scene 1
     if(current_scene:getName() == "industrial_area") then
     --if(true) then
