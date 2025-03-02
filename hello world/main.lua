@@ -9,8 +9,9 @@ function love.load()
     LADDER_TERRAIN_TYPE = "ladder"
     FLOOR_TERRAIN_TYPE = "floor"
     HUMANOID_TYPE = "humanoid"
+    PROJECTILE_TYPE = "projectile"
     debug_message = ""
-
+    proj_debug_message = ""
     --imports
     sti = require 'libraries/sti'
     anim8 = require 'libraries/anim8'
@@ -39,6 +40,9 @@ function love.load()
     --player = spawn_pool.constructPlayer("Richard", current_scene.entry_x, current_scene.entry_y, world, lighting)
     player = humanoid:create("Dicky",0, 0, 32, 42, 32, 42)
     player:load()
+
+    --projectiles
+    projectiles = {}
 
     require './cameraman'
     mc = cameraman:create(cam, player.x, player.y, player.x, player.y, "smooth", 150)
@@ -125,10 +129,108 @@ function love.keypressed(key, scancode, isrepeat)
     if key == "p" then
         toggle_pause()
     end
+
+    if key == "k" then
+        shoot_player_from_mouse()
+    end
 end
 
 function toggle_pause()
     PAUSED = not PAUSED
+end
+
+function shoot_player_from_mouse()
+    -- get mouse
+    local mx, my = love.mouse.getPosition()
+    -- x
+    if (mx) > SCENE_WIDTH then
+        mx = SCENE_WIDTH
+    elseif(mx) < 0 then
+        mx = 0
+    end
+    -- y
+    if (my) > SCENE_HEIGHT then
+        my = SCENE_HEIGHT
+    elseif(my) < 0 then
+        my = 0
+    end 
+
+    -- move projectile to player
+    local projectile = {}
+    projectile.active = true
+    projectile.type = PROJECTILE_TYPE
+    projectile.x = mx
+    projectile.y = my
+    projectile.w = 5
+    projectile.h = 5
+    projectile.target = {}
+    projectile.target.x = player.x+player.hitbox.xoff+player.hitbox.width/2
+    projectile.target.y = player.y+player.hitbox.yoff+player.hitbox.height/2
+    projectile.speed = 500
+    projectile.velocity = {}
+    projectile.velocity.x, projectile.velocity.y = calculateDiagonal(projectile, projectile.target)
+    proj_debug_message = "x: ".. projectile.velocity.x.." y: "..projectile.velocity.y
+    world:add(projectile, projectile.x, projectile.y, projectile.w, projectile.h)
+    table.insert(projectiles,projectile)
+end
+
+function calculateDiagonal(source, destination)
+    local x_axis = (destination.x-source.x)
+    local y_axis = (destination.y-source.y)
+    local diag_vec_mag = math.sqrt((x_axis*x_axis) + (y_axis*y_axis))
+    if(diag_vec_mag > 0) then
+        x_axis = x_axis / diag_vec_mag
+        y_axis = y_axis / diag_vec_mag
+    end
+    return x_axis, y_axis
+end
+
+function outOfBounds(thing)
+    if thing.x < 0 or thing.x > SCENE_WIDTH or thing.y > SCENE_HEIGHT or thing.y < 0 then
+        return true
+    end
+
+    return false
+end
+
+function updateProjectiles(dt)
+    local function collision_control(item, other)
+        if other.type == FLOOR_TERRAIN_TYPE then
+            return "cross"
+        elseif other.type == HUMANOID_TYPE then
+            return "cross"
+        elseif other.type == PROJECTILE_TYPE then
+            return "cross"
+        else
+            return false
+        end
+    end
+
+    for p=1,#projectiles do
+        if projectiles[p].active == false then
+            world:remove(projectiles[p])
+            table.remove(projectiles,p)
+            break
+        else
+            --projectiles[p].x = projectiles[p].x + projectiles[p].velocity.x * dt * projectiles[p].speed 
+            --projectiles[p].y = projectiles[p].y + projectiles[p].velocity.y * dt * projectiles[p].speed
+            local target_x = projectiles[p].x + projectiles[p].velocity.x * dt * projectiles[p].speed
+            local target_y = projectiles[p].y + projectiles[p].velocity.y * dt * projectiles[p].speed
+            local actualX, actualY, cols, len = world:move(projectiles[p],target_x,target_y,collision_control)
+            if len > 0 then
+                projectiles[p].active = false
+                for i=1, #cols do
+                    if cols[i].other.type == HUMANOID_TYPE then
+                        cols[i].other.survival.hp = cols[i].other.survival.hp - projectiles[p].speed * 0.1
+                    end
+                end
+            end
+            projectiles[p].x = target_x
+            projectiles[p].y = target_y
+            
+            world:update(projectiles[p], projectiles[p].x, projectiles[p].y, projectiles[p].w, projectiles[p].h)
+        end
+    end
 end
 
 function evaluate_player_state(humanoid, dt)
@@ -270,8 +372,15 @@ function love.update(dt)
     mc:updateCameraFollowingPlayer()
     --mc:updateTween(dt)
 
+    
+    updateProjectiles(dt)
+    
+
+    
+
     -- collision world¬
     world:update(player, player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
+    
     --world:update(enemy, enemy.x+enemy.hitbox.xoff, enemy.y+enemy.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
     --world:update(enemy2, enemy2.x+enemy2.hitbox.xoff, enemy2.y+enemy2.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
     --world:update(pipe_cloud, pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
@@ -352,6 +461,8 @@ function move_a_humanoid_bounded(humanoid, dt)
             return "slide"
         elseif other.type == HUMANOID_TYPE then
             return "bounce"
+        elseif other.type == PROJECTILE_TYPE then
+            return "cross"
         else
             return false
         end
@@ -396,6 +507,12 @@ function move_a_humanoid_bounded(humanoid, dt)
                     humanoid.velocity.y = -initial_vely
                 end
             end
+            -- projectiles moved to projectiles
+            --if cols[i].other.type == PROJECTILE_TYPE then
+             --   cols[i].other.active = false
+             --   humanoid.survival.hp = humanoid.survival.hp - cols[i].other.speed * 0.1
+             --   humanoid.survival.recently_damaged = true
+            --end
         end
     end
 
@@ -528,7 +645,6 @@ function love.draw()
     if PAUSED then
         local paused_message = "PAUSED"
         
-
         local font       = love.graphics.getFont()
 	    local textWidth  = font:getWidth(paused_message)
 	    local textHeight = font:getHeight()
@@ -555,8 +671,12 @@ function love.draw()
             gameMap:drawLayer(gameMap.layers["Game-1"])
             --lighting.startGodrayShading()
             --light_1.animations.switch:draw(light_1.sprite_sheet, light_1.x, light_1.y)
-            
             gameMap:drawLayer(gameMap.layers["Game"])
+            for p=1, #projectiles do
+                if projectiles[p].active then
+                    love.graphics.rectangle("fill", projectiles[p].x, projectiles[p].y, projectiles[p].w, projectiles[p].h)
+                end
+            end
             gameMap:drawLayer(gameMap.layers["Game+1"])
             
             love.graphics.rectangle("line",player.x+player.hitbox.xoff-5, player.y+player.hitbox.yoff, player.hitbox.width+5, player.hitbox.height)
@@ -585,8 +705,8 @@ function love.draw()
 
         cam:detach()
 
-        love.graphics.print("HP: ", 10, 10)
-        love.graphics.print("Debug: " .. debug_message, 10, 30)
+        love.graphics.print("HP: "..player.survival.hp, 10, 10)
+        love.graphics.print("Debug: " .. proj_debug_message, 10, 30)
     end
     -- end scene 1
     -- if scene 2
@@ -636,6 +756,7 @@ function love.draw()
     if(current_scene:getName() == "garbage") then
         cam:attach()
             gameMap:drawLayer(gameMap.layers["Background"])
+
             gameMap:drawLayer(gameMap.layers["Game-1"])
             gameMap:drawLayer(gameMap.layers["Game"])
             gameMap:drawLayer(gameMap.layers["Game+1"])

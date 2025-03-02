@@ -20,6 +20,7 @@ function humanoid:create(name, x, y, hitbox_xoff, hitbox_yoff, hitbox_w, hitbox_
     h.climbing = false
     h.falling = false
     h.sliding = false
+    h.knocked_down = false
     --animations
     h.animations = {
         walking_left = {},
@@ -33,7 +34,8 @@ function humanoid:create(name, x, y, hitbox_xoff, hitbox_yoff, hitbox_w, hitbox_
         roll_left = {},
         roll_right = {},
         wall_slide_left = {},
-        wall_slide_right = {}
+        wall_slide_right = {},
+        knock_back = {}
     }
     h.current_animation = nil -- randomize starting facing
 
@@ -45,6 +47,7 @@ function humanoid:create(name, x, y, hitbox_xoff, hitbox_yoff, hitbox_w, hitbox_
     h.powers.shield.y = y + hitbox_yoff + hitbox_h/2
 
     h.survival = {}
+    h.survival.hp = 100
     h.survival.recently_damaged = false
     h.survival.recent_damage_timer = 0.0
     h.survival.recent_damage_timer_threshold = 0.15 -- duration can be used to hold animations in view
@@ -89,6 +92,9 @@ function humanoid:load()
     self.animations.wall_slide_right.sprite_sheet = love.graphics.newImage('sprites/4 Proto/wall-slide-right.png')
     self.animations.wall_slide_right.grid = anim8.newGrid(96,84,self.animations.wall_slide_right.sprite_sheet:getWidth(),self.animations.wall_slide_right.sprite_sheet:getHeight())
     self.animations.wall_slide_right.animation = anim8.newAnimation(self.animations.wall_slide_right.grid('1-6',1),0.05)
+    self.animations.knock_back.sprite_sheet = love.graphics.newImage('sprites/4 Proto/knockback.png')
+    self.animations.knock_back.grid = anim8.newGrid(96,84,self.animations.knock_back.sprite_sheet:getWidth(),self.animations.knock_back.sprite_sheet:getHeight())
+    self.animations.knock_back.animation = anim8.newAnimation(self.animations.knock_back.grid('1-6',1),0.05)
     self.current_animation = self.animations.idle_right
     -- add to collision world
     world:add(self, self.x+self.hitbox.xoff, self.y+self.hitbox.yoff, self.hitbox.width, self.hitbox.height)
@@ -158,6 +164,19 @@ function humanoid:updateAnimationBasedOnVelocity(dt, world)
     self.current_animation.animation:update(dt * self.animation_rate)
 end
 
+function humanoid:calculate_knockdown(collider) -- if hit form right we want to do a knockback animation to the left.
+    self.knocked_down = true
+    -- determine net trajectory of player after receiving collision
+    self.velocity.x = self.velocity.x - collider.velocity.x
+    self.velocity.y = self.velocity.y - collider.velocity.y
+
+    if(self.velocity.x < 0) then
+        self.x_dir = -1
+    else 
+        self.x_dir = 1
+    end
+end
+
 function humanoid:check_wall_slide(world)
     if(self.velocity.y > 0) then
         local function is_floor(other)
@@ -219,3 +238,4 @@ function humanoid:updateRootPosition(x,y)
     self.powers.shield.y = self.y + self.hitbox.yoff + self.hitbox.height/2
     -- extend
 end
+
