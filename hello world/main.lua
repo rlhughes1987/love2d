@@ -23,19 +23,22 @@ function love.load()
     
     require './console'
     require './module'
-
+    require './nic'
     cons1 = console:create(1)
     mod_def = module:create("Defender")
-    cons2 = console:create(2)
+    cons2 = console:create(1)
     mod_atk = module:create("Defender")
-    mod_def_2 = module:create("Attacker")
+    --mod_def_2 = module:create("Attacker")
     --mod_atk_2 = module:create("Attacker")
     
     counter = 0
     
     cons1:insert(mod_def)
     cons2:insert(mod_atk)
-    cons2:insert(mod_def_2)
+    --cons2:insert(mod_def_2)
+
+    cons1.nic = nic:create(cons1)
+    cons2.nic = nic:create(cons2)
 
     start_session(cons1, cons2)
     CONS1HP = cons1.barrier
@@ -741,9 +744,17 @@ function love.draw()
             gameMap:drawLayer(gameMap.layers["Foreground"])
 
         cam:detach()
+        local cons1_state_message = ""
+        local cons2_state_message = ""
+        for m=1, #cons1.modules do
+            cons1_state_message = cons1_state_message .. " M:" .. cons1.modules[m].state_message
+        end
+        for m=1, #cons2.modules do
+            cons2_state_message = cons2_state_message .. " M:" .. cons2.modules[m].state_message
+        end
 
-        love.graphics.print("HP: "..player.survival.hp, 10, 10)
-        love.graphics.print("Debug: " .. proj_debug_message, 10, 30)
+        love.graphics.print("CONS1 state: " .. cons1_state_message, 10, 10)
+        love.graphics.print("CONS2 state: " .. cons2_state_message, 10, 30)
         love.graphics.print("CONS1 barrier: " .. CONS1HP, 10, 50)
         love.graphics.print("CONS2 barrier: " .. CONS2HP, 10, 70)
     end

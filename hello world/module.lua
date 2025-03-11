@@ -10,13 +10,21 @@ function module:create(name)
     m.timer = {}
     m.cooling = false
     m.type = name
+    m.console = nil
+    m.state_message = ""
     return m
 end
 
-function module:activate(console, duration)
-    if self.active == true or self.cooling == true then
-        return
+function module:trigger(console, duration)
+    if not self.active and not self.cooling then
+        self:activate(duration)
+    elseif self.active or self.cooling then
+        self:passive(console)
     end
+end
+
+function module:activate(duration)
+    
     self.active = true
     -- on activation effects
     -- start timer
@@ -47,11 +55,11 @@ function module:passive(console)
     self.timer.count = self.timer.count + 1
 
     if(self.active) then
-        proj_debug_message = " module active. timer: "..self.timer.count.." duration: "..self.timer.duration
+        self.state_message = " module active. timer: "..self.timer.count.." duration: "..self.timer.duration
     end
 
     if(self.cooling) then
-        proj_debug_message = " module cooling. timer: "..self.timer.count.." duration: "..self.timer.duration
+        self.state_message = " module cooling. timer: "..self.timer.count.." duration: "..self.timer.duration
     end
 
 end
@@ -60,6 +68,6 @@ function module:deactivate()
     self.active = false
     -- deactivation effects
     self.cooling = true
-    self.timer.duration = 30
+    self.timer.duration = 20
     self.timer.count = 0
 end
