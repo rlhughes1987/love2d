@@ -21,6 +21,25 @@ function love.load()
     camera = require 'libraries/camera'
     cam = camera()
     
+    require './console'
+    require './module'
+
+    cons1 = console:create(1)
+    mod_def = module:create("Defender")
+    cons2 = console:create(2)
+    mod_atk = module:create("Defender")
+    mod_def_2 = module:create("Attacker")
+    --mod_atk_2 = module:create("Attacker")
+    
+    counter = 0
+    
+    cons1:insert(mod_def)
+    cons2:insert(mod_atk)
+    cons2:insert(mod_def_2)
+
+    start_session(cons1, cons2)
+    CONS1HP = cons1.barrier
+    CONS2HP = cons2.barrier
 
     --gameMap = sti('maps/industrial_area.lua')
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
@@ -85,6 +104,13 @@ function love.load()
     --hammer_4 = animated_object_factory.constructHammer("hammer4",480,512)
     --hammer_4.animations.turned_on:gotoFrame(5)
     --hammer_5 = animated_object_factory.constructHammer("hammer5",512,512)
+end
+
+function start_session(console_aggressor, console_passive)
+    console_aggressor:connect(console_passive)
+    console_passive:connect(console_aggressor)
+    console_aggressor:activate()
+    console_passive:activate()
 end
 
 function love.keypressed(key, scancode, isrepeat)
@@ -384,6 +410,15 @@ function love.update(dt)
     --world:update(enemy, enemy.x+enemy.hitbox.xoff, enemy.y+enemy.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
     --world:update(enemy2, enemy2.x+enemy2.hitbox.xoff, enemy2.y+enemy2.hitbox.yoff, enemy.hitbox.width, enemy.hitbox.height)
     --world:update(pipe_cloud, pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
+
+    counter = counter + dt
+    if counter > 1 then
+        counter = 0
+        cons1:passive()
+        cons2:passive()
+        CONS1HP = cons1.barrier
+        CONS2HP = cons2.barrier
+    end
 
 end
 
@@ -689,6 +724,8 @@ function love.draw()
                 player.current_animation.animation:draw(player.current_animation.sprite_sheet, player.x, player.y, 0, player.scale, player.scale, 0, 0)
             end
             
+            
+            
             --love.graphics.rectangle("line",player.x+player.hitbox.xoff, player.y+player.hitbox.yoff, player.hitbox.width, player.hitbox.height)
             --enemy.current_animation.animation:draw(enemy.current_animation.sprite_sheet, enemy.x, enemy.y, 0, enemy.scale, enemy.scale, 0, 0)
             --enemy2.current_animation.animation:draw(enemy2.current_animation.sprite_sheet, enemy2.x, enemy2.y, 0, enemy2.scale, enemy2.scale, 0, 0)
@@ -707,6 +744,8 @@ function love.draw()
 
         love.graphics.print("HP: "..player.survival.hp, 10, 10)
         love.graphics.print("Debug: " .. proj_debug_message, 10, 30)
+        love.graphics.print("CONS1 barrier: " .. CONS1HP, 10, 50)
+        love.graphics.print("CONS2 barrier: " .. CONS2HP, 10, 70)
     end
     -- end scene 1
     -- if scene 2

@@ -8,9 +8,9 @@ function scene_organiser:create()
     setmetatable(sg, scene_organiser)
     sg.scenes = {
         scene:create("industrial_area", 30, 220),
-        scene:create("chasm", 416, 0),
-        scene:create("pit", 448, 0),
-        scene:create("garbage", 448,0)
+        --scene:create("chasm", 416, 0),
+        --scene:create("pit", 448, 0),
+        --scene:create("garbage", 448,0)
     }
     sg.current_scene_index = 1
     return sg
