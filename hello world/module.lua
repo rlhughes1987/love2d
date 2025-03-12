@@ -12,6 +12,7 @@ function module:create(name)
     m.type = name
     m.console = nil
     m.state_message = ""
+    m.hp = 15
     return m
 end
 

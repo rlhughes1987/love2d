@@ -25,7 +25,9 @@ function console:create(slots, x, y, image)
     -- defense attributes
     c.barrier = 0 -- software defense taking damage
     c.armour = 0 -- console taking damage
+    c.maxarmour = 0
     c.hull = 0 -- modules taking damage
+    c.maxhull = 0
     -- attack attributes
     c.brute_force = 0
     c.disrupt = 0
@@ -93,6 +95,10 @@ function console:insert(module)
         module.console = self
         module.x = self.x + self.slots.xoff
         module.y = self.y + self.slots.yoff + ((next_slot_index-1) * self.slots.h)
+        self.hull = self.hull + module.hull
+        self.maxhull = self.maxhull + module.hull
+        self.armour = self.armour + module.armour
+        self.maxarmour = self.maxarmour + module.armour
         table.insert(self.modules, module)
     end
 end
@@ -127,9 +133,38 @@ function console:decodeMessage(message)
 end
 
 function console:draw()
+    --console
     love.graphics.draw(self.image,self.x,self.y)
+    --modules
     for m=1,#self.modules do
         love.graphics.draw(self.modules[m].image, self.modules[m].x, self.modules[m].y)
     end
-    love.graphics.print("" .. self.barrier, self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+self.screen.padding)
+    --screen data
+    --love.graphics.print("" .. self.barrier, self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+self.screen.padding)
+    local hp_bar_height = self.screen.h/10
+    --hp
+    love.graphics.rectangle("fill", self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+self.screen.padding, self:getCurrentBarrierBarWidth(), hp_bar_height)
+    love.graphics.rectangle("line", self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+self.screen.padding, self.screen.w - (2*self.screen.padding), hp_bar_height)
+    --console
+    love.graphics.rectangle("fill", self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+(2*self.screen.padding)+hp_bar_height, self:getCurrentArmourBarWidth(), hp_bar_height)
+    love.graphics.rectangle("line", self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+(2*self.screen.padding)+hp_bar_height, self.screen.w - (2*self.screen.padding), hp_bar_height)
+    --modules
+    love.graphics.rectangle("fill", self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+(3*self.screen.padding)+(2*hp_bar_height), self:getCurrentStructureBarWidth(), hp_bar_height)
+    love.graphics.rectangle("line", self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+(3*self.screen.padding)+(2*hp_bar_height), self.screen.w - (2*self.screen.padding), hp_bar_height)
+end
+
+function console:getCurrentBarrierBarWidth()
+    local max_hp_bar_width = self.screen.w - (2*self.screen.padding)
+    local current_hp_bar_width = (self.barrier/self.buffer) * max_hp_bar_width
+    return current_hp_bar_width
+end
+function console:getCurrentArmourBarWidth()
+    local max_hp_bar_width = self.screen.w - (2*self.screen.padding)
+    local current_hp_bar_width = (self.armour/self.maxarmour) * max_hp_bar_width
+    return current_hp_bar_width
+end
+function console:getCurrentStructureBarWidth()
+    local max_hp_bar_width = self.screen.w - (2*self.screen.padding)
+    local current_hp_bar_width = (self.hull/self.maxhull) * max_hp_bar_width
+    return current_hp_bar_width
 end

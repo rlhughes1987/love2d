@@ -15,6 +15,9 @@ function module:create(name, x, y, image)
     m.x = x
     m.y = y
     m.image = love.graphics.newImage(image)
+    m.hull = 10
+    m.armour = 25
+    m.cooldown = 7
     return m
 end
 
@@ -74,6 +77,6 @@ function module:deactivate()
     self.active = false
     -- deactivation effects
     self.cooling = true
-    self.timer.duration = 20
+    self.timer.duration = self.cooldown
     self.timer.count = 0
 end
