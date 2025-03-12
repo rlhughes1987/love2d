@@ -1,7 +1,7 @@
 module = {}
 module.__index = module
 
-function module:create(name)
+function module:create(name, x, y, image)
     local m = {}
     setmetatable(m, module)
     m.name = name
@@ -12,6 +12,9 @@ function module:create(name)
     m.type = name
     m.console = nil
     m.state_message = ""
+    m.x = x
+    m.y = y
+    m.image = love.graphics.newImage(image)
     return m
 end
 

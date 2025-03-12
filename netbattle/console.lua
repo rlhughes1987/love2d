@@ -4,12 +4,15 @@ require './message'
 console = {}
 console.__index = console
 
-function console:create(slots)
+function console:create(slots, x, y, image)
     local c = {}
     setmetatable(c, console)
     c.modules = {}
-    c.slots = {count=slots, xoff=434, yoff=117}
-    c.screen = {xoff=103, yoff=130, w=228, h=120}
+    c.image = love.graphics.newImage(image)
+    c.x = x
+    c.y = y
+    c.slots = {count=slots, xoff=434, yoff=117, w=67, h=31, padding = 0}
+    c.screen = {xoff=103, yoff=130, w=228, h=120, padding = 10}
     c.active_slot_index = 0
     c.nic = nil
     c.fans = {}
@@ -28,6 +31,7 @@ function console:create(slots)
     c.disrupt = 0
     c.psionic = 0
     c.state_message = ""
+    
     return c
 end
 
@@ -85,7 +89,10 @@ function console:insert(module)
         return false
     else
         self.state_message = "inserted module "..module.name
+        local next_slot_index = #self.modules + 1
         module.console = self
+        module.x = self.x + self.slots.xoff
+        module.y = self.y + self.slots.yoff + ((next_slot_index-1) * self.slots.h)
         table.insert(self.modules, module)
     end
 end
@@ -117,4 +124,12 @@ function console:decodeMessage(message)
 
     self.barrier = math.max(0,self.barrier - brute_force)
     -- to do implement disrupt and psionic effects
+end
+
+function console:draw()
+    love.graphics.draw(self.image,self.x,self.y)
+    for m=1,#self.modules do
+        love.graphics.draw(self.modules[m].image, self.modules[m].x, self.modules[m].y)
+    end
+    love.graphics.print("" .. self.barrier, self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+self.screen.padding)
 end

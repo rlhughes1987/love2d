@@ -8,33 +8,33 @@ function love.load()
     require './module'
     require './nic'
 
-    cons1 = console:create(4)
-    mod_def_1 = module:create("Defender")
-    mod_def_2 = module:create("Defender")
-    mod_def_3 = module:create("Defender")
-    mod_def_4 = module:create("Defender")
-    mod_def_5 = module:create("Defender")
-    mod_def_6 = module:create("Defender")
-    mod_def_7 = module:create("Defender")
-    mod_def_8 = module:create("Defender")
+    cons1 = console:create(4,192,416,"assets/rwt-dnx500.png")
+    mod_def_1 = module:create("Defender",10,50,"assets/turtle-module.png")
+    mod_def_2 = module:create("Defender",10,90,"assets/turtle-module.png")
+    mod_def_3 = module:create("Defender",10,130,"assets/turtle-module.png")
+    mod_def_4 = module:create("Defender",10,170,"assets/turtle-module.png")
+    mod_def_5 = module:create("Defender",10,210,"assets/turtle-module.png")
+    --mod_def_6 = module:create("Defender")
+    --mod_def_7 = module:create("Defender")
+    --mod_def_8 = module:create("Defender")
 
-    cons2 = console:create(4)
-    mod_atk_1 = module:create("Attacker")
-    mod_atk_2 = module:create("Attacker")
-    mod_atk_3 = module:create("Attacker")
-    mod_atk_4 = module:create("Attacker")
+    cons2 = console:create(4,192,0,"assets/rwt-dnx500.png")
+    mod_atk_1 = module:create("Attacker",10,50,"assets/tiger-module.png")
+    mod_atk_2 = module:create("Attacker",10,90,"assets/tiger-module.png")
+    mod_atk_3 = module:create("Attacker",10,130,"assets/tiger-module.png")
+    mod_atk_4 = module:create("Attacker",10,170,"assets/tiger-module.png")
     
     counter = 0
     
-    cons1:insert(mod_def_1)
     cons1:insert(mod_atk_1)
+    cons1:insert(mod_atk_2)
+    cons1:insert(mod_def_1)
     cons1:insert(mod_def_2)
-    cons1:insert(mod_def_3)
 
+    cons2:insert(mod_def_3)
     cons2:insert(mod_def_4)
+    cons2:insert(mod_atk_3)
     cons2:insert(mod_def_5)
-    cons2:insert(mod_atk_2)
-    cons2:insert(mod_def_6)
 
     cons1.nic = nic:create(cons1)
     cons2.nic = nic:create(cons2)
@@ -50,9 +50,7 @@ function love.load()
     gameMap = current_scene.map
     candidate_scene = nil -- if not nil then we should start drawing next scene and updating world objects (in love.update)
 
-    -- assets
-    tiger_module = love.graphics.newImage("assets/tiger-module.png")
-    dnx500 = love.graphics.newImage("assets/rwt-dnx500.png")
+    
 end
 
 function start_session(console_aggressor, console_passive)
@@ -89,14 +87,14 @@ function love.draw()
 
     love.graphics.print("CONS1 state: " .. cons1_state_message, 10, 10)
     love.graphics.print("CONS2 state: " .. cons2_state_message, 10, 30)
-    love.graphics.print("CONS1 barrier: " .. CONS1HP, 10, 50)
+    
     love.graphics.print("CONS2 barrier: " .. CONS2HP, 10, 70)
 
     if(current_scene:getName() == "protobattle") then
         gameMap:drawLayer(gameMap.layers["Background"])
         --gameMap:drawLayer(gameMap.layers["Consoles"])
-        love.graphics.draw(dnx500,192,416)
-        love.graphics.draw(tiger_module, 192+cons1.slots.xoff, 416+cons1.slots.yoff)
+        cons1:draw()
+        cons2:draw()
     end
 
 end
