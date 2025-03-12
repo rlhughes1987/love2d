@@ -13,7 +13,7 @@ function console:create(slots)
     c.nic = nil
     c.fans = {}
     c.rate = 1 -- 1 cycle per second
-    c.power = 20
+    c.power = 5
     c.active = false
     c.decay = 1 -- per second
     c.remote = nil
@@ -40,16 +40,26 @@ function console:passive()
     -- console passively ticks other modules
     if self.active then
         for m=1,#self.modules do
+            --self.state_message = "m="..m.." active_slot_index="..self.active_slot_index
+            self.modules[m]:tick()
+        end
+        for m=1,#self.modules do
+            --self.state_message = "m="..m.." active_slot_index="..self.active_slot_index
+            --self.modules[m]:tick()
             if m == self.active_slot_index then
+                self.state_message = "slot="..m
                 self:applyDecay()
                 self.modules[m]:trigger(self, self.power) -- power improves duration of modules
-                if self.remote ~= nil and m == #self.modules then -- message only fires once all module stack parsed
-                    local msg = message:create(self.brute_force, self.disrupt, self.psionic)
-                    self.nic:send(msg, self.remote)
-                    self.active_slot_index = 1
-                end
-                self.active_slot_index = self.active_slot_index + 1
+                break
             end
+        end
+        --
+        if self.remote ~= nil and self.active_slot_index == #self.modules then -- message only fires once all module stack parsed
+            local msg = message:create(self.brute_force, self.disrupt, self.psionic)
+            self.nic:send(msg, self.remote)
+            self.active_slot_index = 1
+        else
+            self.active_slot_index = self.active_slot_index + 1
         end
     end
 end
@@ -71,7 +81,6 @@ end
 function console:insert(module)
     if module.size > self:availableSpace() then
         self.state_message = "no space for module "..module.name
-        module.console = self
         return false
     else
         self.state_message = "inserted module "..module.name

@@ -24,17 +24,33 @@ function love.load()
     require './console'
     require './module'
     require './nic'
-    cons1 = console:create(1)
-    mod_def = module:create("Defender")
-    cons2 = console:create(1)
-    mod_atk = module:create("Defender")
-    --mod_def_2 = module:create("Attacker")
-    --mod_atk_2 = module:create("Attacker")
+    cons1 = console:create(4)
+    mod_def_1 = module:create("Defender")
+    mod_def_2 = module:create("Defender")
+    mod_def_3 = module:create("Defender")
+    mod_def_4 = module:create("Defender")
+    mod_def_5 = module:create("Defender")
+    mod_def_6 = module:create("Defender")
+    mod_def_7 = module:create("Defender")
+    mod_def_8 = module:create("Defender")
+    cons2 = console:create(4)
+    mod_atk_1 = module:create("Attacker")
+    mod_atk_2 = module:create("Attacker")
+    mod_atk_3 = module:create("Attacker")
+    mod_atk_4 = module:create("Attacker")
     
     counter = 0
     
-    cons1:insert(mod_def)
-    cons2:insert(mod_atk)
+    cons1:insert(mod_def_1)
+    cons1:insert(mod_atk_1)
+    cons1:insert(mod_def_2)
+    cons1:insert(mod_def_3)
+
+    cons2:insert(mod_def_4)
+    cons2:insert(mod_def_5)
+    cons2:insert(mod_atk_2)
+    cons2:insert(mod_def_6)
+    
     --cons2:insert(mod_def_2)
 
     cons1.nic = nic:create(cons1)
@@ -415,7 +431,7 @@ function love.update(dt)
     --world:update(pipe_cloud, pipe_cloud.x+pipe_cloud.hitbox.xoff, pipe_cloud.y+pipe_cloud.hitbox.yoff, pipe_cloud.hitbox.width, pipe_cloud.hitbox.height)
 
     counter = counter + dt
-    if counter > 1 then
+    if counter > 0.3 then
         counter = 0
         cons1:passive()
         cons2:passive()
@@ -744,8 +760,8 @@ function love.draw()
             gameMap:drawLayer(gameMap.layers["Foreground"])
 
         cam:detach()
-        local cons1_state_message = ""
-        local cons2_state_message = ""
+        local cons1_state_message = "C: " .. cons1.state_message
+        local cons2_state_message = "C: " .. cons2.state_message
         for m=1, #cons1.modules do
             cons1_state_message = cons1_state_message .. " M:" .. cons1.modules[m].state_message
         end

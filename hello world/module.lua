@@ -7,7 +7,7 @@ function module:create(name)
     m.name = name
     m.size = 1   -- number of slots it occupies
     m.active = false
-    m.timer = {}
+    m.timer = {count = 0, duration = 0}
     m.cooling = false
     m.type = name
     m.console = nil
@@ -16,11 +16,12 @@ function module:create(name)
 end
 
 function module:trigger(console, duration)
+    --self.state_message = " active="..tostring(self.active).." cooling="..tostring(self.cooling)
     if not self.active and not self.cooling then
         self:activate(duration)
-    elseif self.active or self.cooling then
-        self:passive(console)
     end
+    self:passive(console)
+
 end
 
 function module:activate(duration)
@@ -33,6 +34,7 @@ function module:activate(duration)
 end
 
 function module:passive(console)
+    self.state_message = tostring(self.active).."/CHECK/"..self.timer.count
     if self.active and (self.timer.count < self.timer.duration) then
         --- while active effects
         if self.type == "Defender" then
@@ -51,17 +53,18 @@ function module:passive(console)
         self.active = false
         self.cooling = false
     end
-    
-    self.timer.count = self.timer.count + 1
+end
 
+function module:tick()
+    self.timer.count = self.timer.count + 1
+    self.state_message = tostring(self.active).."/NOPE/"..self.timer.count
     if(self.active) then
-        self.state_message = " module active. timer: "..self.timer.count.." duration: "..self.timer.duration
+        --self.state_message = "active timer="..self.timer.count.." duration="..self.timer.duration
     end
 
     if(self.cooling) then
-        self.state_message = " module cooling. timer: "..self.timer.count.." duration: "..self.timer.duration
+        --self.state_message = "cooling timer="..self.timer.count.." duration="..self.timer.duration
     end
-
 end
 
 function module:deactivate()
