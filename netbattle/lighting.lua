@@ -68,23 +68,41 @@ const number NUM_SAMPLES = 100 ;
 }]]
 
 
-local crt_monitor_shader = [[
-    
+local crt_monitor_code = [[
+    extern vec2 distortionFactor;
+    extern vec2 scaleFactor;
+    extern number feather;
 
+    vec4 effect(vec4 color, Image tex, vec2 uv, vec2 px) {
+      // to barrel coordinates
+      uv = uv * 2.0 - vec2(1.0);
 
-]]
+      // distort
+      uv *= scaleFactor;
+      uv += (uv.yx*uv.yx) * uv * (distortionFactor - 1.0);
+      number mask = (1.0 - smoothstep(1.0-feather,1.0,abs(uv.x)))
+                  * (1.0 - smoothstep(1.0-feather,1.0,abs(uv.y)));
+
+      // to cartesian coordinates
+      uv = (uv + vec2(1.0)) / 2.0;
+
+      return color * Texel(tex, uv) * mask;
+    }
+  ]]
 
 
 
 local lighting = {
     distance_shading = { shader = love.graphics.newShader(distance_shading_code), distance_lights = {} },
-    godray_shading = { shader = love.graphics.newShader(god_ray_code), ray = nil }
+    godray_shading = { shader = love.graphics.newShader(god_ray_code), ray = nil },
+    crt_shading = { shader = love.graphics.newShader(crt_monitor_code), crt = nil }
 --extend
 }
 
 function lighting.reset()
     lighting.distance_shading.distance_lights = {}
     lighting.godray_shading.ray = {}
+    lighting.crt_shading.crt = {}
 end
 
 function lighting.addDistanceLight(light, power, r, g, b) -- pass light object and assign power and colour
@@ -95,6 +113,21 @@ end
 function lighting.addGodRay(light, decay, density, weight)
     local godray = {lightobj = light, decay = decay, density = density, weight = weight}
     lighting.godray_shading.ray = godray
+end
+
+function lighting.addCRTShading(light)
+    local crt = { lightobj = light }
+    lighting.crt_shading.crt = crt
+end
+
+function lighting.StartCRTShading()
+    if lighting.crt_shading.crt.lightobj.enabled then
+        local shader = lighting.crt_shading.shader
+        love.graphics.setShader(shader)
+        shader:send("distortionFactor", {1.06, 1.065})
+        shader:send("scaleFactor", {1, 1})
+        shader:send("feather", 0.02)
+    end
 end
 
 function lighting.startGodrayShading()

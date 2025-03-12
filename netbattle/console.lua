@@ -12,7 +12,7 @@ function console:create(slots, x, y, image)
     c.x = x
     c.y = y
     c.slots = {count=slots, xoff=434, yoff=117, w=67, h=31, padding = 0}
-    c.screen = {xoff=103, yoff=130, w=228, h=120, padding = 10}
+    c.screen = {enabled = true, xoff=103, yoff=130, w=228, h=120, padding = 10}
     c.active_slot_index = 0
     c.nic = nil
     c.fans = {}
@@ -168,3 +168,6 @@ function console:getCurrentStructureBarWidth()
     local current_hp_bar_width = (self.hull/self.maxhull) * max_hp_bar_width
     return current_hp_bar_width
 end
+
+
+

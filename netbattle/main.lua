@@ -1,5 +1,7 @@
 function love.load()
 
+    lighting = require './lighting'
+
     sti = require 'libraries/sti'
 
     love.graphics.setDefaultFilter("nearest", "nearest") --removes blur from scaling
@@ -8,7 +10,8 @@ function love.load()
     require './module'
     require './nic'
 
-    cons1 = console:create(4,192,416,"assets/rwt-dnx500.png")
+    cons1 = console:create(7,192,416,"assets/rwt-dnx500.png")
+    lighting.addCRTShading(cons1.screen)
     mod_def_1 = module:create("Defender",10,50,"assets/turtle-module.png")
     mod_def_2 = module:create("Defender",10,90,"assets/turtle-module.png")
     mod_def_3 = module:create("Defender",10,130,"assets/turtle-module.png")
@@ -18,7 +21,8 @@ function love.load()
     --mod_def_7 = module:create("Defender")
     --mod_def_8 = module:create("Defender")
 
-    cons2 = console:create(4,192,0,"assets/rwt-dnx500.png")
+    cons2 = console:create(7,192,0,"assets/rwt-dnx500.png")
+    
     mod_atk_1 = module:create("Attacker",10,50,"assets/tiger-module.png")
     mod_atk_2 = module:create("Attacker",10,90,"assets/tiger-module.png")
     mod_atk_3 = module:create("Attacker",10,130,"assets/tiger-module.png")
@@ -50,7 +54,6 @@ function love.load()
     gameMap = current_scene.map
     candidate_scene = nil -- if not nil then we should start drawing next scene and updating world objects (in love.update)
 
-    
 end
 
 function start_session(console_aggressor, console_passive)
@@ -73,7 +76,6 @@ function love.update(dt)
 end
 
 
-
 function love.draw()
 
     local cons1_state_message = "C: " .. cons1.state_message
@@ -92,9 +94,11 @@ function love.draw()
 
     if(current_scene:getName() == "protobattle") then
         gameMap:drawLayer(gameMap.layers["Background"])
+        lighting.StartCRTShading()
         --gameMap:drawLayer(gameMap.layers["Consoles"])
         cons1:draw()
         cons2:draw()
+        lighting.endShading()
     end
 
 end
