@@ -68,7 +68,7 @@ const number NUM_SAMPLES = 100 ;
 }]]
 
 
-local crt_monitor_code = [[
+local crt_monitor_code_1 = [[
     extern vec2 distortionFactor;
     extern vec2 scaleFactor;
     extern number feather;
@@ -90,12 +90,25 @@ local crt_monitor_code = [[
     }
   ]]
 
+local chrome_ab_code = [[
+    extern vec2 direction;
+    vec4 effect(vec4 color, Image texture, vec2 tc, vec2 _)
+    {
+      return color * vec4(
+        Texel(texture, tc - direction).r,
+        Texel(texture, tc).g,
+        Texel(texture, tc + direction).b,
+        1.0);
+    }]]
+
+local film_grain = [[]]
+
 
 
 local lighting = {
     distance_shading = { shader = love.graphics.newShader(distance_shading_code), distance_lights = {} },
     godray_shading = { shader = love.graphics.newShader(god_ray_code), ray = nil },
-    crt_shading = { shader = love.graphics.newShader(crt_monitor_code), crt = nil }
+    crt_shading = { shader = love.graphics.newShader(chrome_ab_code), crt = nil }
 --extend
 }
 
@@ -121,13 +134,21 @@ function lighting.addCRTShading(light)
 end
 
 function lighting.StartCRTShading()
-    if lighting.crt_shading.crt.lightobj.enabled then
-        local shader = lighting.crt_shading.shader
-        love.graphics.setShader(shader)
-        shader:send("distortionFactor", {1.06, 1.065})
-        shader:send("scaleFactor", {1, 1})
-        shader:send("feather", 0.02)
+    local angle, radius = 0, 100
+    local setters = {
+        angle  = function(v) angle  = tonumber(v) or 0 end,
+        radius = function(v) radius = tonumber(v) or 0 end
+    }
+
+    local draw = function(buffer, effect)
+        local dx = math.cos(angle) * radius / love.graphics.getWidth()
+        local dy = math.sin(angle) * radius / love.graphics.getHeight()
+        shader:send("direction", {dx,dy})
+        moonshine.draw_shader(buffer, shader)
     end
+
+    local shader = lighting.crt_shading.shader
+    love.graphics.setShader(shader)
 end
 
 function lighting.startGodrayShading()

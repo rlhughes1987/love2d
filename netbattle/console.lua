@@ -134,11 +134,15 @@ end
 
 function console:draw()
     --console
-    love.graphics.draw(self.image,self.x,self.y)
+    --love.graphics.draw(self.image,self.x,self.y)
     --modules
     for m=1,#self.modules do
         love.graphics.draw(self.modules[m].image, self.modules[m].x, self.modules[m].y)
     end
+    
+end
+
+function console:drawScreenData()
     --screen data
     --love.graphics.print("" .. self.barrier, self.x+self.screen.xoff+self.screen.padding, self.y+self.screen.yoff+self.screen.padding)
     local hp_bar_height = self.screen.h/10
